@@ -6,7 +6,7 @@
 
   <node pkg="{{ package_name }}" exec="{{ node_name }}" namespace="$(var namespace)" name="$(var name)" output="screen">
 {% if has_params %}
-    <param from="$(arg params)" />
+    <param from="$(var params)" />
 {% endif %}
   </node>
 
