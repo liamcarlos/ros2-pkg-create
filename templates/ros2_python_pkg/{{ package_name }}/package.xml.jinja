@@ -12,6 +12,9 @@
   <license>{{ license }}</license>
 
   <depend>rclpy</depend>
+{% if has_diagnostics %}
+  <depend>diagnostic_updater</depend>
+{% endif %}
   <depend>std_msgs</depend>
 {% if has_service_server %}
   <depend>std_srvs</depend>
