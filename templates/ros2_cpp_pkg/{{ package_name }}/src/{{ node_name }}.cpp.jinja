@@ -198,6 +198,13 @@ void {{ node_class_name }}::setup() {
   // timer for repeatedly invoking a callback
   timer_ = this->create_wall_timer(std::chrono::duration<double>(1.0), std::bind(&{{ node_class_name }}::timerCallback, this));
 {% endif %}
+{% if has_diagnostics %}
+
+  // setup diagnostic updater
+  diagnostic_updater_.setHardwareID(this->get_name());
+  diagnostic_updater_.add("{{ node_name }} diagnostics", this, &{{ node_class_name }}::diagnostics);
+  // optional: add more diagnostic tasks here [https://github.com/ros/diagnostics/blob/ros2/diagnostic_updater/src/example.cpp]
+{% endif %}
 {% if auto_shutdown and not is_lifecycle %}
 
   auto_shutdown_timer_ = this->create_wall_timer(std::chrono::duration<double>(3.0), std::bind(&{{ node_class_name }}::autoShutdownTimerCallback, this));
@@ -322,6 +329,17 @@ void {{ node_class_name }}::actionExecute(const std::shared_ptr<rclcpp_action::S
 void {{ node_class_name }}::timerCallback() {
 
   RCLCPP_INFO(this->get_logger(), "Timer triggered");
+}
+{% endif %}
+{% if has_diagnostics %}
+
+
+void {{ node_class_name }}::diagnostics(diagnostic_updater::DiagnosticStatusWrapper& stat) {
+
+  // TODO: fill diagnostic status message appropriately based on current system state
+  stat.summary(diagnostic_msgs::msg::DiagnosticStatus::OK, "Node is running properly");
+  // optional: add custom key-value pairs to diagnostics status
+  stat.add("Dummy Status Key", "Dummy Status Value");
 }
 {% endif %}
 {% if auto_shutdown %}

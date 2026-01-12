@@ -20,6 +20,9 @@
 {% if has_service_server %}
 #include <std_srvs/srv/set_bool.hpp>
 {% endif %}
+{% if has_diagnostics %}
+#include <diagnostic_updater/diagnostic_updater.hpp>
+{% endif %}
 {% if has_action_server %}
 
 #include <{{ package_name }}_interfaces/action/fibonacci.hpp>
@@ -279,6 +282,18 @@ class {{ node_class_name }} : public rclcpp::Node {
    * @brief Dummy parameter (parameter)
    */
   double param_ = 1.0;
+{% endif %}
+{% if has_diagnostics %}
+
+  /**
+   * @brief Diagnostic updater publishes to "/diagnostics" with period set in parameter "~diagnostic_updater.period"
+   */
+  diagnostic_updater::Updater diagnostic_updater_{this};
+
+  /**
+   * @brief Function called by diagnostic updater to populate diagnostics status
+   */
+  void diagnostics(diagnostic_updater::DiagnosticStatusWrapper &stat);
 {% endif %}
 {% if auto_shutdown %}
 
