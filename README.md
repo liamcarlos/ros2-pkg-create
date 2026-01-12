@@ -82,6 +82,7 @@ eval "$(register-python-argcomplete ros2-pkg-create)"
 - Add a service server?
 - Add an action server?
 - Add a timer callback?
+- Add a diagnostics publisher?
 - Add the docker-ros CI integration?
 </details>
 
@@ -106,6 +107,7 @@ eval "$(register-python-argcomplete ros2-pkg-create)"
 - Add a service server?
 - Add an action server?
 - Add a timer callback?
+- Add a diagnostics publisher?
 - Add the docker-ros CI integration?
 </details>
 
