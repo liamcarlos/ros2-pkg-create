@@ -132,7 +132,7 @@ has_timer:
   default: false
 
 has_diagnostics:
-  help: Add diagnostics publisher?
+  help: Add diagnostics updater?
   when: "{{ template == 'ros2_cpp_pkg' or template == 'ros2_python_pkg' }}"
   type: bool
   default: false
