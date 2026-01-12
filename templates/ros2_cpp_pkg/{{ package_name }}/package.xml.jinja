@@ -13,6 +13,9 @@
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
+{% if has_diagnostics %}
+  <depend>diagnostic_updater</depend>
+{% endif %}
   <depend>rclcpp</depend>
 {% if has_action_server %}
   <depend>rclcpp_action</depend>

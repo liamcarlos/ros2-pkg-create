@@ -17,6 +17,9 @@ find_package(rclcpp_components REQUIRED)
 {% if is_lifecycle %}
 find_package(rclcpp_lifecycle REQUIRED)
 {% endif %}
+{% if has_diagnostics %}
+find_package(diagnostic_updater REQUIRED)
+{% endif %}
 find_package(std_msgs REQUIRED)
 {% if has_service_server %}
 find_package(std_srvs REQUIRED)
@@ -57,6 +60,9 @@ target_link_libraries(${TARGET_NAME} PUBLIC
 {% endif %}
 {% if is_lifecycle %}
   ${rclcpp_lifecycle_TARGETS}
+{% endif %}
+{% if has_diagnostics %}
+  ${diagnostic_updater_TARGETS}
 {% endif %}
   ${std_msgs_TARGETS}
 {% if has_service_server %}
