@@ -202,7 +202,7 @@ void {{ node_class_name }}::setup() {
 
   // setup diagnostic updater
   diagnostic_updater_.setHardwareID(this->get_name());
-  diagnostic_updater_.add("{{ node_name }} diagnostics", this, &{{ node_class_name }}::diagnostics);
+  diagnostic_updater_.add("{{ node_name }} Status", this, &{{ node_class_name }}::diagnostics);
   // optional: add more diagnostic tasks here [https://github.com/ros/diagnostics/blob/ros2/diagnostic_updater/src/example.cpp]
 {% endif %}
 {% if auto_shutdown and not is_lifecycle %}
