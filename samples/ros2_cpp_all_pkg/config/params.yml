@@ -1,3 +1,4 @@
 /**/*:
   ros__parameters:
+    diagnostic_updater.period: 0.1
     param: 1.0

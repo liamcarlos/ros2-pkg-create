@@ -12,6 +12,7 @@
 #include <rclcpp_lifecycle/lifecycle_publisher.hpp>
 #include <std_msgs/msg/int32.hpp>
 #include <std_srvs/srv/set_bool.hpp>
+#include <diagnostic_updater/diagnostic_updater.hpp>
 
 #include <ros2_cpp_all_pkg_interfaces/action/fibonacci.hpp>
 
@@ -212,6 +213,16 @@ class Ros2CppNode : public rclcpp_lifecycle::LifecycleNode {
    * @brief Dummy parameter (parameter)
    */
   double param_ = 1.0;
+
+  /**
+   * @brief Diagnostic updater publishes to "/diagnostics" with period set in parameter "~diagnostic_updater.period"
+   */
+  diagnostic_updater::Updater diagnostic_updater_{this};
+
+  /**
+   * @brief Function called by diagnostic updater to populate diagnostics status
+   */
+  void diagnostics(diagnostic_updater::DiagnosticStatusWrapper &stat);
 };
 
 

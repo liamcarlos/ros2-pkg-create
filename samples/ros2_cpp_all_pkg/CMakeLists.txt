@@ -11,6 +11,7 @@ find_package(rclcpp_action REQUIRED)
 find_package(ros2_cpp_all_pkg_interfaces REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(rclcpp_lifecycle REQUIRED)
+find_package(diagnostic_updater REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
 
@@ -36,6 +37,7 @@ target_link_libraries(${TARGET_NAME} PUBLIC
   ${ros2_cpp_all_pkg_interfaces_TARGETS}
   ${rclcpp_components_TARGETS}
   ${rclcpp_lifecycle_TARGETS}
+  ${diagnostic_updater_TARGETS}
   ${std_msgs_TARGETS}
   ${std_srvs_TARGETS}
 )

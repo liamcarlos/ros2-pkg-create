@@ -143,6 +143,11 @@ void Ros2CppNode::setup() {
     std::bind(&Ros2CppNode::actionHandleCancel, this, std::placeholders::_1),
     std::bind(&Ros2CppNode::actionHandleAccepted, this, std::placeholders::_1)
   );
+
+  // setup diagnostic updater
+  diagnostic_updater_.setHardwareID(this->get_name());
+  diagnostic_updater_.add("ros2_cpp_node diagnostics", this, &Ros2CppNode::diagnostics);
+  // optional: add more diagnostic tasks here [https://github.com/ros/diagnostics/blob/ros2/diagnostic_updater/src/example.cpp]
 }
 
 
@@ -247,6 +252,15 @@ void Ros2CppNode::actionExecute(const std::shared_ptr<rclcpp_action::ServerGoalH
 void Ros2CppNode::timerCallback() {
 
   RCLCPP_INFO(this->get_logger(), "Timer triggered");
+}
+
+
+void Ros2CppNode::diagnostics(diagnostic_updater::DiagnosticStatusWrapper& stat) {
+
+  // TODO: fill diagnostic status message appropriately based on current system state
+  stat.summary(diagnostic_msgs::msg::DiagnosticStatus::OK, "Node is running properly");
+  // optional: add custom key-value pairs to diagnostics status
+  stat.add("Dummy Status Key", "Dummy Status Value");
 }
 
 
