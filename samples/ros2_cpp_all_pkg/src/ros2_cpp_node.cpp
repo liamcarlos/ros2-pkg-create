@@ -146,7 +146,7 @@ void Ros2CppNode::setup() {
 
   // setup diagnostic updater
   diagnostic_updater_.setHardwareID(this->get_name());
-  diagnostic_updater_.add("ros2_cpp_node diagnostics", this, &Ros2CppNode::diagnostics);
+  diagnostic_updater_.add("ros2_cpp_node Status", this, &Ros2CppNode::diagnostics);
   // optional: add more diagnostic tasks here [https://github.com/ros/diagnostics/blob/ros2/diagnostic_updater/src/example.cpp]
 }
 
