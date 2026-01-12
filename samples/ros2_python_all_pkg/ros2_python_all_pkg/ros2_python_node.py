@@ -9,6 +9,8 @@ from rcl_interfaces.msg import (FloatingPointRange, IntegerRange, ParameterDescr
 from std_msgs.msg import Int32
 from std_srvs.srv import SetBool
 from ros2_python_all_pkg_interfaces.action import Fibonacci
+from diagnostic_msgs.msg import DiagnosticStatus
+from diagnostic_updater import Updater
 
 
 class Ros2PythonNode(Node):
@@ -159,6 +161,12 @@ class Ros2PythonNode(Node):
         # timer for repeatedly invoking a callback to publish messages
         self.timer = self.create_timer(1.0, self.timer_callback)
 
+        # setup diagnostic updater
+        self.diagnostic_updater = Updater(self)
+        self.diagnostic_updater.setHardwareID(self.get_name())
+        self.diagnostic_updater.add("ros2_python_node Status", self.diagnostics)
+        # optional: add more diagnostic tasks here [https://github.com/ros/diagnostics/blob/ros2/diagnostic_updater/src/example.cpp]
+
     def topic_callback(self, msg: Int32):
         """Processes messages received by a subscriber
 
@@ -277,6 +285,17 @@ class Ros2PythonNode(Node):
         """
 
         self.get_logger().info("Timer triggered")
+
+    def diagnostics(self, stat):
+        """Function called by diagnostic updater to populate diagnostics status
+        """
+
+        # TODO: fill diagnostic status message appropriately based on current system state
+        stat.summary(DiagnosticStatus.OK, "Node is running properly")
+        # optional: add custom key-value pairs to diagnostics status
+        stat.add("Dummy Status Key", "Dummy Status Value")
+
+        return stat
 
 
 def main():
