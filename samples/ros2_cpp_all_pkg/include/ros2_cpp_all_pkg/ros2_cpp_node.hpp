@@ -219,6 +219,7 @@ class Ros2CppNode : public rclcpp_lifecycle::LifecycleNode {
    * @brief Diagnostic updater publishes to "/diagnostics" with period set in parameter "~diagnostic_updater.period"
    */
   diagnostic_updater::Updater diagnostic_updater_{this};
+  unsigned char system_status_ = diagnostic_msgs::msg::DiagnosticStatus::STALE;
   std::vector<std::shared_ptr<diagnostic_updater::DiagnosticTask>> diagnostic_tasks_;
   std::unique_ptr<diagnostic_updater::TopicDiagnostic> topic_diagnostic_;
   double min_freq_ = 0.5;

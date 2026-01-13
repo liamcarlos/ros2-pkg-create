@@ -345,7 +345,19 @@ void {{ node_class_name }}::timerCallback() {
 void {{ node_class_name }}::diagnostics(diagnostic_updater::DiagnosticStatusWrapper& stat) {
 
   // TODO: fill diagnostic status message appropriately based on current system state
-  stat.summary(diagnostic_msgs::msg::DiagnosticStatus::OK, "Node is running properly");
+  if(system_status_ == diagnostic_msgs::msg::DiagnosticStatus::ERROR) {
+    stat.summary(diagnostic_msgs::msg::DiagnosticStatus::ERROR, "Node is non-functional, unable to obtain, and/or yielding implausible data.");
+    system_status_ = diagnostic_msgs::msg::DiagnosticStatus::WARN;
+  } else if(system_status_ == diagnostic_msgs::msg::DiagnosticStatus::WARN) {
+    stat.summary(diagnostic_msgs::msg::DiagnosticStatus::WARN, "Node is able to assess its own performance level, but is not able to reach its desired performance level.");
+    system_status_ = diagnostic_msgs::msg::DiagnosticStatus::OK;
+  } else if(system_status_ == diagnostic_msgs::msg::DiagnosticStatus::OK) {
+    stat.summary(diagnostic_msgs::msg::DiagnosticStatus::OK, "Node is able to assess its own performance level and is reaching its desired performance level.");
+    system_status_ = diagnostic_msgs::msg::DiagnosticStatus::STALE;
+  } else {
+    stat.summary(diagnostic_msgs::msg::DiagnosticStatus::STALE, "Node performance level cannot be assessed");
+    system_status_ = diagnostic_msgs::msg::DiagnosticStatus::ERROR;
+  }
   // optional: add custom key-value pairs to diagnostics status
   stat.add("Dummy Status Key", "Dummy Status Value");
 }
