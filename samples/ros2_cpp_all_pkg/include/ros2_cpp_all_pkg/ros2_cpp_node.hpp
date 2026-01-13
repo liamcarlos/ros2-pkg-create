@@ -13,6 +13,7 @@
 #include <std_msgs/msg/int32.hpp>
 #include <std_srvs/srv/set_bool.hpp>
 #include <diagnostic_updater/diagnostic_updater.hpp>
+#include <diagnostic_updater/publisher.hpp>
 
 #include <ros2_cpp_all_pkg_interfaces/action/fibonacci.hpp>
 
@@ -218,6 +219,12 @@ class Ros2CppNode : public rclcpp_lifecycle::LifecycleNode {
    * @brief Diagnostic updater publishes to "/diagnostics" with period set in parameter "~diagnostic_updater.period"
    */
   diagnostic_updater::Updater diagnostic_updater_{this};
+  std::vector<std::shared_ptr<diagnostic_updater::DiagnosticTask>> diagnostic_tasks_;
+  std::unique_ptr<diagnostic_updater::TopicDiagnostic> topic_diagnostic_;
+  double min_freq_ = 0.5;
+  double max_freq_ = 5.0;
+  double min_delta_stamp_ = -0.1;
+  double max_delta_stamp_ = 0.1;
 
   /**
    * @brief Function called by diagnostic updater to populate diagnostics status
