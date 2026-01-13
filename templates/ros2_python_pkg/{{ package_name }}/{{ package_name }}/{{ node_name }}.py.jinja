@@ -24,6 +24,9 @@ from {{ package_name }}_interfaces.action import Fibonacci
 {% if has_diagnostics %}
 from diagnostic_msgs.msg import DiagnosticStatus
 from diagnostic_updater import Updater
+{% if has_subscriber %}
+from diagnostic_updater import TopicDiagnostic, FrequencyStatusParam, TimeStampStatusParam
+{% endif %}
 {% endif %}
 
 
@@ -201,6 +204,15 @@ class {{ node_class_name }}(Node):
         self.diagnostic_updater.setHardwareID(self.get_name())
         self.diagnostic_updater.add("{{ node_name }} Status", self.diagnostics)
         # optional: add more diagnostic tasks here [https://github.com/ros/diagnostics/blob/ros2/diagnostic_updater/src/example.cpp]
+{% if has_subscriber %}
+        self.freq_bound_ = {"min": 0.5, "max": 5.0}
+        self.topic_diagnostic = TopicDiagnostic(
+            "~/input",
+            self.diagnostic_updater,
+            FrequencyStatusParam(self.freq_bound_),
+            TimeStampStatusParam(-0.1, 0.1)
+        )
+{% endif %}
 {% endif %}
 {% if auto_shutdown %}
 
