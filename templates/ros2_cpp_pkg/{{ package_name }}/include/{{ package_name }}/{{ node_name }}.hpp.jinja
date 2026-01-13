@@ -22,7 +22,9 @@
 {% endif %}
 {% if has_diagnostics %}
 #include <diagnostic_updater/diagnostic_updater.hpp>
+{% if has_subscriber %}
 #include <diagnostic_updater/publisher.hpp>
+{% endif %}
 {% endif %}
 {% if has_action_server %}
 
