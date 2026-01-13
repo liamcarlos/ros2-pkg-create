@@ -11,6 +11,7 @@ from std_srvs.srv import SetBool
 from ros2_python_all_pkg_interfaces.action import Fibonacci
 from diagnostic_msgs.msg import DiagnosticStatus
 from diagnostic_updater import Updater
+from diagnostic_updater import TopicDiagnostic, FrequencyStatusParam, TimeStampStatusParam
 
 
 class Ros2PythonNode(Node):
@@ -166,6 +167,13 @@ class Ros2PythonNode(Node):
         self.diagnostic_updater.setHardwareID(self.get_name())
         self.diagnostic_updater.add("ros2_python_node Status", self.diagnostics)
         # optional: add more diagnostic tasks here [https://github.com/ros/diagnostics/blob/ros2/diagnostic_updater/src/example.cpp]
+        self.freq_bound_ = {"min": 0.5, "max": 5.0}
+        self.topic_diagnostic = TopicDiagnostic(
+            "~/input",
+            self.diagnostic_updater,
+            FrequencyStatusParam(self.freq_bound_),
+            TimeStampStatusParam(-0.1, 0.1)
+        )
 
     def topic_callback(self, msg: Int32):
         """Processes messages received by a subscriber
