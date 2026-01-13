@@ -166,6 +166,7 @@ class Ros2PythonNode(Node):
         self.diagnostic_updater = Updater(self)
         self.diagnostic_updater.setHardwareID(self.get_name())
         self.diagnostic_updater.add("ros2_python_node Status", self.diagnostics)
+        self.system_status_ = DiagnosticStatus.STALE
         # optional: add more diagnostic tasks here [https://github.com/ros/diagnostics/blob/ros2/diagnostic_updater/src/example.cpp]
         self.freq_bound_ = {"min": 0.5, "max": 5.0}
         self.topic_diagnostic = TopicDiagnostic(
@@ -299,7 +300,18 @@ class Ros2PythonNode(Node):
         """
 
         # TODO: fill diagnostic status message appropriately based on current system state
-        stat.summary(DiagnosticStatus.OK, "Node is running properly")
+        if self.system_status_ == DiagnosticStatus.ERROR:
+            stat.summary(DiagnosticStatus.ERROR, "Node is non-functional, unable to obtain, and/or yielding implausible data.")
+            self.system_status_ = DiagnosticStatus.WARN
+        elif self.system_status_ == DiagnosticStatus.WARN:
+            stat.summary(DiagnosticStatus.WARN, "Node is able to assess its own performance level, but is not able to reach its desired performance level.")
+            self.system_status_ = DiagnosticStatus.OK
+        elif self.system_status_ == DiagnosticStatus.OK:
+            stat.summary(DiagnosticStatus.OK, "Node is able to assess its own performance level and is reaching its desired performance level.")
+            self.system_status_ = DiagnosticStatus.STALE
+        else:
+            stat.summary(DiagnosticStatus.STALE, "Node performance level cannot be assessed")
+            self.system_status_ = DiagnosticStatus.ERROR
         # optional: add custom key-value pairs to diagnostics status
         stat.add("Dummy Status Key", "Dummy Status Value")
 
