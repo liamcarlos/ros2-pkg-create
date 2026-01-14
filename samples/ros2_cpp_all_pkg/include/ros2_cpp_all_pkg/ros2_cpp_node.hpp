@@ -220,12 +220,13 @@ class Ros2CppNode : public rclcpp_lifecycle::LifecycleNode {
    */
   diagnostic_updater::Updater diagnostic_updater_{this};
   unsigned char system_status_ = diagnostic_msgs::msg::DiagnosticStatus::STALE;
-  std::vector<std::shared_ptr<diagnostic_updater::DiagnosticTask>> diagnostic_tasks_;
-  std::unique_ptr<diagnostic_updater::TopicDiagnostic> topic_diagnostic_;
-  double min_freq_ = 0.5;
-  double max_freq_ = 5.0;
-  double min_delta_stamp_ = -0.1;
-  double max_delta_stamp_ = 0.1;
+  std::unique_ptr<diagnostic_updater::HeaderlessTopicDiagnostic> subscriber_diagnostic_;
+  struct {
+    double freq_min = 0.5;
+    double freq_max = 5.0;
+    double freq_tolerance = 0.1;
+    int freq_window_size = 5;
+  } subscriber_diagnostic_params_;
 
   /**
    * @brief Function called by diagnostic updater to populate diagnostics status

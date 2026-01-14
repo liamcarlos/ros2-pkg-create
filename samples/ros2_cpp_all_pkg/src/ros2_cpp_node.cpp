@@ -147,11 +147,10 @@ void Ros2CppNode::setup() {
   // setup diagnostic updater
   diagnostic_updater_.setHardwareID("none");
   diagnostic_updater_.add("ros2_cpp_node Status", this, &Ros2CppNode::diagnostics);
-  topic_diagnostic_ = std::make_unique<diagnostic_updater::TopicDiagnostic>(
+  subscriber_diagnostic_ = std::make_unique<diagnostic_updater::HeaderlessTopicDiagnostic>(
     "~/input",
     diagnostic_updater_,
-    diagnostic_updater::FrequencyStatusParam(&min_freq_, &max_freq_),
-    diagnostic_updater::TimeStampStatusParam(min_delta_stamp_, max_delta_stamp_)
+    diagnostic_updater::FrequencyStatusParam(&subscriber_diagnostic_params_.freq_min, &subscriber_diagnostic_params_.freq_max, subscriber_diagnostic_params_.freq_tolerance, subscriber_diagnostic_params_.freq_window_size)
   );
 }
 
