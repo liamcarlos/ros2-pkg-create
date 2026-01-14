@@ -16,6 +16,9 @@
 {% if has_diagnostics %}
   <depend>diagnostic_updater</depend>
 {% endif %}
+{% if has_subscriber or has_publisher %}
+  <depend>geometry_msgs</depend>
+{% endif %}
   <depend>rclcpp</depend>
 {% if has_action_server %}
   <depend>rclcpp_action</depend>
@@ -26,7 +29,6 @@
 {% if is_lifecycle %}
   <depend>rclcpp_lifecycle</depend>
 {% endif %}
-  <depend>std_msgs</depend>
 {% if has_service_server %}
   <depend>std_srvs</depend>
 {% endif %}

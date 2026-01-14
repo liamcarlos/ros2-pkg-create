@@ -165,16 +165,16 @@ void {{ node_class_name }}::setup() {
 
   // subscriber for handling incoming messages
 {% if executor_type == "MultiThreadedExecutor" %}
-  subscriber_ = this->create_subscription<std_msgs::msg::Int32>("~/input", 10, std::bind(&{{ node_class_name }}::topicCallback, this, std::placeholders::_1), subscriber_options);
+  subscriber_ = this->create_subscription<geometry_msgs::msg::PointStamped>("~/input", 10, std::bind(&{{ node_class_name }}::topicCallback, this, std::placeholders::_1), subscriber_options);
 {% else %}
-  subscriber_ = this->create_subscription<std_msgs::msg::Int32>("~/input", 10, std::bind(&{{ node_class_name }}::topicCallback, this, std::placeholders::_1));
+  subscriber_ = this->create_subscription<geometry_msgs::msg::PointStamped>("~/input", 10, std::bind(&{{ node_class_name }}::topicCallback, this, std::placeholders::_1));
 {% endif %}
   RCLCPP_INFO(this->get_logger(), "Subscribed to '%s'", subscriber_->get_topic_name());
 {% endif %}
 {% if has_publisher %}
 
   // publisher for publishing outgoing messages
-  publisher_ = this->create_publisher<std_msgs::msg::Int32>("~/output", 10);
+  publisher_ = this->create_publisher<geometry_msgs::msg::PointStamped>("~/output", 10);
   RCLCPP_INFO(this->get_logger(), "Publishing to '%s'", publisher_->get_topic_name());
 {% endif %}
 {% if has_service_server %}
@@ -219,25 +219,25 @@ void {{ node_class_name }}::setup() {
 {% if has_subscriber %}
 
 
-void {{ node_class_name }}::topicCallback(const std_msgs::msg::Int32::ConstSharedPtr& msg) {
+void {{ node_class_name }}::topicCallback(const geometry_msgs::msg::PointStamped::ConstSharedPtr& msg) {
 
 {% if has_diagnostics %}
   topic_diagnostic_->tick();
 {% endif %}
-  RCLCPP_INFO(this->get_logger(), "Message received: '%d'", msg->data);
+  RCLCPP_INFO(this->get_logger(), "Message received with stamp: '%d'", msg->header.stamp.sec);
 
 {% if has_publisher %}
   // publish message
   {% if is_component %}
-  std_msgs::msg::Int32::UniquePtr out_msg = std::make_unique<std_msgs::msg::Int32>();
-  out_msg->data = msg->data;
-  RCLCPP_INFO(this->get_logger(), "Message published: '%d'", out_msg->data);
+  geometry_msgs::msg::PointStamped::UniquePtr out_msg = std::make_unique<geometry_msgs::msg::PointStamped>();
+  *out_msg = *msg;
+  RCLCPP_INFO(this->get_logger(), "Message published with stamp: '%d'", out_msg->header.stamp.sec);
   publisher_->publish(std::move(out_msg));
   {% else %}
-  std_msgs::msg::Int32 out_msg;
-  out_msg.data = msg->data;
+  geometry_msgs::msg::PointStamped out_msg;
+  out_msg = *msg;
   publisher_->publish(out_msg);
-  RCLCPP_INFO(this->get_logger(), "Message published: '%d'", out_msg.data);
+  RCLCPP_INFO(this->get_logger(), "Message published with stamp: '%d'", out_msg.header.stamp.sec);
   {% endif %}
 {% endif %}
 }
