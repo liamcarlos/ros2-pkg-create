@@ -1,6 +1,6 @@
 /**/*:
   ros__parameters:
     diagnostic_updater:
-      period: 0.1
+      period: 1.0
       use_fqn: false
     param: 1.0
