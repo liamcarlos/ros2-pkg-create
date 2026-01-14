@@ -82,7 +82,7 @@ eval "$(register-python-argcomplete ros2-pkg-create)"
 - Add a service server?
 - Add an action server?
 - Add a timer callback?
-- Add a diagnostics updater?
+- Add a diagnostics updater to publish diagnostics?
 - Add the docker-ros CI integration?
 </details>
 
@@ -107,7 +107,7 @@ eval "$(register-python-argcomplete ros2-pkg-create)"
 - Add a service server?
 - Add an action server?
 - Add a timer callback?
-- Add a diagnostics updater?
+- Add a diagnostics updater to publish diagnostics?
 - Add the docker-ros CI integration?
 </details>
 
@@ -194,7 +194,7 @@ options:
   --no-has-action-server
   --has-timer           Add a timer callback?
   --no-has-timer
-  --has-diagnostics     Add a diagnostics updater?
+  --has-diagnostics     Add a diagnostics updater to publish diagnostics?
   --no-has-diagnostics
   --auto-shutdown       Automatically shutdown the node after launch (useful in CI/CD)?
   --no-auto-shutdown
