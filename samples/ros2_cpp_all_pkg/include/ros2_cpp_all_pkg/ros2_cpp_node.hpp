@@ -4,6 +4,8 @@
 #include <string>
 #include <vector>
 
+#include <diagnostic_updater/diagnostic_updater.hpp>
+#include <diagnostic_updater/publisher.hpp>
 #include <lifecycle_msgs/msg/state.hpp>
 #include <lifecycle_msgs/msg/transition.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -12,8 +14,6 @@
 #include <rclcpp_lifecycle/lifecycle_publisher.hpp>
 #include <std_msgs/msg/int32.hpp>
 #include <std_srvs/srv/set_bool.hpp>
-#include <diagnostic_updater/diagnostic_updater.hpp>
-#include <diagnostic_updater/publisher.hpp>
 
 #include <ros2_cpp_all_pkg_interfaces/action/fibonacci.hpp>
 

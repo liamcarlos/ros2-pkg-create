@@ -6,12 +6,12 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 find_package(ament_cmake REQUIRED)
+find_package(diagnostic_updater REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_action REQUIRED)
 find_package(ros2_cpp_all_pkg_interfaces REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(rclcpp_lifecycle REQUIRED)
-find_package(diagnostic_updater REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
 
@@ -33,11 +33,11 @@ target_compile_features(${TARGET_NAME} PUBLIC c_std_99 cxx_std_17)
 
 target_link_libraries(${TARGET_NAME} PUBLIC
   rclcpp::rclcpp
+  ${diagnostic_updater_TARGETS}
   ${rclcpp_action_TARGETS}
   ${ros2_cpp_all_pkg_interfaces_TARGETS}
   ${rclcpp_components_TARGETS}
   ${rclcpp_lifecycle_TARGETS}
-  ${diagnostic_updater_TARGETS}
   ${std_msgs_TARGETS}
   ${std_srvs_TARGETS}
 )

@@ -4,6 +4,12 @@
 #include <string>
 #include <vector>
 
+{% if has_diagnostics %}
+#include <diagnostic_updater/diagnostic_updater.hpp>
+{% if has_subscriber %}
+#include <diagnostic_updater/publisher.hpp>
+{% endif %}
+{% endif %}
 {% if is_lifecycle %}
 #include <lifecycle_msgs/msg/state.hpp>
 #include <lifecycle_msgs/msg/transition.hpp>
@@ -19,12 +25,6 @@
 #include <std_msgs/msg/int32.hpp>
 {% if has_service_server %}
 #include <std_srvs/srv/set_bool.hpp>
-{% endif %}
-{% if has_diagnostics %}
-#include <diagnostic_updater/diagnostic_updater.hpp>
-{% if has_subscriber %}
-#include <diagnostic_updater/publisher.hpp>
-{% endif %}
 {% endif %}
 {% if has_action_server %}
 
