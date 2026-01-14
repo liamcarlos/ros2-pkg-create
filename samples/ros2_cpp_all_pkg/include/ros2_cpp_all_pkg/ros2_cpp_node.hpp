@@ -230,19 +230,34 @@ class Ros2CppNode : public rclcpp_lifecycle::LifecycleNode {
    */
   unsigned char health_ = diagnostic_msgs::msg::DiagnosticStatus::STALE;
   /**
-   * @brief Topic diagnostic to diagnose a subscribed topic
+   * @brief Topic diagnostic to auto-diagnose a subscribed topic
    */
-  std::unique_ptr<diagnostic_updater::HeaderlessTopicDiagnostic> subscriber_diagnostic_;
+  std::unique_ptr<diagnostic_updater::HeaderlessTopicDiagnostic> topic_diagnostic_;
   
   /**
-   * @brief Parameters for configuring subscriber diagnostic monitoring
+   * @brief Minimum acceptable frequency of auto-diagnosed topic subscription
    */
-  struct {
-    double min_frequency = 0.5;           ///< Minimum expected message frequency (Hz)
-    double max_frequency = 5.0;           ///< Maximum expected message frequency (Hz)
-    double frequency_tolerance = 0.1;     ///< Tolerance for frequency deviation. Acceptable values are from 'min_frequency*(1-frequency_tolerance)' to 'max_frequency*(1+frequency_tolerance)'.
-    int frequency_window_size = 5;        ///< Number of diagnostic calls (depending on 'diagnostic_updater.period' parameter) to consider in the frequency calculation. It should be large enough to get a reliable estimate of the frequency depending on the expected message rate in relation to the diagnostic updater period.
-  } subscriber_diagnostic_params_;
+  double topic_diagnostic_min_frequency_ = 1.0;
+  
+  /**
+   * @brief Maximum acceptable frequency of auto-diagnosed topic subscription
+   */
+  double topic_diagnostic_max_frequency_ = 1.0;
+  
+  /**
+   * @brief Tolerance for frequency deviation.
+   * Acceptable frequencies are from `min_frequency * (1 - frequency_tolerance)`
+   * to `max_frequency * (1 + frequency_tolerance)`.
+   */
+  const double topic_diagnostic_frequency_tolerance_ = 0.1;
+  
+  /**
+   * @brief Number of diagnostic calls to consider in the frequency calculation.
+   * It should be large enough to get a reliable estimate of the frequency depending
+   * on the expected message rate in relation to the diagnostic updater period.
+   */
+  const int topic_diagnostic_frequency_window_size_ = 5;
+  
 };
 
 

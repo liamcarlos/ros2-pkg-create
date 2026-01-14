@@ -147,17 +147,17 @@ void Ros2CppNode::setup() {
   // setup diagnostic updater
   diagnostic_updater_.setHardwareID("none");
   diagnostic_updater_.add("Health", this, &Ros2CppNode::health);
-  subscriber_diagnostic_ = std::make_unique<diagnostic_updater::HeaderlessTopicDiagnostic>(
+  topic_diagnostic_ = std::make_unique<diagnostic_updater::HeaderlessTopicDiagnostic>(
     "~/input",
     diagnostic_updater_,
-    diagnostic_updater::FrequencyStatusParam(&subscriber_diagnostic_params_.min_frequency, &subscriber_diagnostic_params_.max_frequency, subscriber_diagnostic_params_.frequency_tolerance, subscriber_diagnostic_params_.frequency_window_size)
+    diagnostic_updater::FrequencyStatusParam(&topic_diagnostic_min_frequency_, &topic_diagnostic_max_frequency_, topic_diagnostic_frequency_tolerance_, topic_diagnostic_frequency_window_size_)
   );
 }
 
 
 void Ros2CppNode::topicCallback(const std_msgs::msg::Int32::ConstSharedPtr& msg) {
 
-  subscriber_diagnostic_->tick();
+  topic_diagnostic_->tick();
   RCLCPP_INFO(this->get_logger(), "Message received: '%d'", msg->data);
 
   // publish message
