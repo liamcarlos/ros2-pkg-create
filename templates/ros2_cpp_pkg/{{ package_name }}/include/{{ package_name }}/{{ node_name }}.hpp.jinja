@@ -306,7 +306,7 @@ class {{ node_class_name }} : public rclcpp::Node {
   /**
    * @brief Function called by diagnostic updater to populate diagnostics status
    */
-  void diagnostics(diagnostic_updater::DiagnosticStatusWrapper &stat);
+  void health(diagnostic_updater::DiagnosticStatusWrapper &stat);
 {% endif %}
 {% if auto_shutdown %}
 

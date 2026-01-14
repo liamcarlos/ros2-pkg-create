@@ -146,7 +146,7 @@ void Ros2CppNode::setup() {
 
   // setup diagnostic updater
   diagnostic_updater_.setHardwareID("none");
-  diagnostic_updater_.add("ros2_cpp_node Status", this, &Ros2CppNode::diagnostics);
+  diagnostic_updater_.add("Health", this, &Ros2CppNode::health);
   subscriber_diagnostic_ = std::make_unique<diagnostic_updater::HeaderlessTopicDiagnostic>(
     "~/input",
     diagnostic_updater_,
@@ -260,7 +260,7 @@ void Ros2CppNode::timerCallback() {
 }
 
 
-void Ros2CppNode::diagnostics(diagnostic_updater::DiagnosticStatusWrapper& stat) {
+void Ros2CppNode::health(diagnostic_updater::DiagnosticStatusWrapper& stat) {
 
   // TODO: fill diagnostic status message appropriately based on current system state
   if(system_status_ == diagnostic_msgs::msg::DiagnosticStatus::ERROR) {

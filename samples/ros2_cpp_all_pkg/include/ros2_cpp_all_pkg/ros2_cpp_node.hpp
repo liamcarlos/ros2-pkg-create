@@ -231,7 +231,7 @@ class Ros2CppNode : public rclcpp_lifecycle::LifecycleNode {
   /**
    * @brief Function called by diagnostic updater to populate diagnostics status
    */
-  void diagnostics(diagnostic_updater::DiagnosticStatusWrapper &stat);
+  void health(diagnostic_updater::DiagnosticStatusWrapper &stat);
 };
 
 
