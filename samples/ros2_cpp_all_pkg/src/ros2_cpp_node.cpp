@@ -157,6 +157,7 @@ void Ros2CppNode::setup() {
 
 void Ros2CppNode::topicCallback(const std_msgs::msg::Int32::ConstSharedPtr& msg) {
 
+  subscriber_diagnostic_->tick();
   RCLCPP_INFO(this->get_logger(), "Message received: '%d'", msg->data);
 
   // publish message
