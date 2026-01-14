@@ -173,6 +173,11 @@ class Ros2CppNode : public rclcpp_lifecycle::LifecycleNode {
    */
   void timerCallback();
 
+  /**
+   * @brief Function called by diagnostic updater to populate diagnostics status
+   */
+  void health(diagnostic_updater::DiagnosticStatusWrapper &stat);
+
  private:
 
   /**
@@ -227,11 +232,6 @@ class Ros2CppNode : public rclcpp_lifecycle::LifecycleNode {
     double freq_tolerance = 0.1;
     int freq_window_size = 5;
   } subscriber_diagnostic_params_;
-
-  /**
-   * @brief Function called by diagnostic updater to populate diagnostics status
-   */
-  void health(diagnostic_updater::DiagnosticStatusWrapper &stat);
 };
 
 

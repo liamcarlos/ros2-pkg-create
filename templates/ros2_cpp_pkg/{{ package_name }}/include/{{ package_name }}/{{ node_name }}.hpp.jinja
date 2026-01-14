@@ -217,6 +217,13 @@ class {{ node_class_name }} : public rclcpp::Node {
    */
   void timerCallback();
 {% endif %}
+{% if has_diagnostics %}
+
+  /**
+   * @brief Function called by diagnostic updater to populate diagnostics status
+   */
+  void health(diagnostic_updater::DiagnosticStatusWrapper &stat);
+{% endif %}
 {% if auto_shutdown %}
 
   /**
@@ -302,11 +309,6 @@ class {{ node_class_name }} : public rclcpp::Node {
     int freq_window_size = 5;
   } subscriber_diagnostic_params_;
 {% endif %}
-
-  /**
-   * @brief Function called by diagnostic updater to populate diagnostics status
-   */
-  void health(diagnostic_updater::DiagnosticStatusWrapper &stat);
 {% endif %}
 {% if auto_shutdown %}
 
