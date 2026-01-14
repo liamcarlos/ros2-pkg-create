@@ -207,7 +207,7 @@ void {{ node_class_name }}::setup() {
   subscriber_diagnostic_ = std::make_unique<diagnostic_updater::HeaderlessTopicDiagnostic>(
     "~/input",
     diagnostic_updater_,
-    diagnostic_updater::FrequencyStatusParam(&subscriber_diagnostic_params_.freq_min, &subscriber_diagnostic_params_.freq_max, subscriber_diagnostic_params_.freq_tolerance, subscriber_diagnostic_params_.freq_window_size)
+    diagnostic_updater::FrequencyStatusParam(&subscriber_diagnostic_params_.min_frequency, &subscriber_diagnostic_params_.max_frequency, subscriber_diagnostic_params_.frequency_tolerance, subscriber_diagnostic_params_.frequency_window_size)
   );
 {% endif %}
 {% endif %}
@@ -346,18 +346,18 @@ void {{ node_class_name }}::timerCallback() {
 void {{ node_class_name }}::health(diagnostic_updater::DiagnosticStatusWrapper& stat) {
 
   // TODO: fill diagnostic status message appropriately based on current system state
-  if(system_status_ == diagnostic_msgs::msg::DiagnosticStatus::ERROR) {
+  if(health_ == diagnostic_msgs::msg::DiagnosticStatus::ERROR) {
     stat.summary(diagnostic_msgs::msg::DiagnosticStatus::ERROR, "Node is non-functional, unable to obtain, and/or yielding implausible data.");
-    system_status_ = diagnostic_msgs::msg::DiagnosticStatus::WARN;
-  } else if(system_status_ == diagnostic_msgs::msg::DiagnosticStatus::WARN) {
+    health_ = diagnostic_msgs::msg::DiagnosticStatus::WARN;
+  } else if(health_ == diagnostic_msgs::msg::DiagnosticStatus::WARN) {
     stat.summary(diagnostic_msgs::msg::DiagnosticStatus::WARN, "Node is able to assess its own performance level, but is not able to reach its desired performance level.");
-    system_status_ = diagnostic_msgs::msg::DiagnosticStatus::OK;
-  } else if(system_status_ == diagnostic_msgs::msg::DiagnosticStatus::OK) {
+    health_ = diagnostic_msgs::msg::DiagnosticStatus::OK;
+  } else if(health_ == diagnostic_msgs::msg::DiagnosticStatus::OK) {
     stat.summary(diagnostic_msgs::msg::DiagnosticStatus::OK, "Node is able to assess its own performance level and is reaching its desired performance level.");
-    system_status_ = diagnostic_msgs::msg::DiagnosticStatus::STALE;
+    health_ = diagnostic_msgs::msg::DiagnosticStatus::STALE;
   } else {
     stat.summary(diagnostic_msgs::msg::DiagnosticStatus::STALE, "Node performance level cannot be assessed");
-    system_status_ = diagnostic_msgs::msg::DiagnosticStatus::ERROR;
+    health_ = diagnostic_msgs::msg::DiagnosticStatus::ERROR;
   }
   // optional: add custom key-value pairs to diagnostics status
   stat.add("Dummy Status Key", "Dummy Status Value");

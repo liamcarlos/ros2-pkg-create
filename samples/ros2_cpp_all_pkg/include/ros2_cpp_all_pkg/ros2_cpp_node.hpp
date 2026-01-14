@@ -221,16 +221,27 @@ class Ros2CppNode : public rclcpp_lifecycle::LifecycleNode {
   double param_ = 1.0;
 
   /**
-   * @brief Diagnostic updater publishes to "/diagnostics" with period set in parameter "~diagnostic_updater.period"
+   * @brief Diagnostic updater
    */
   diagnostic_updater::Updater diagnostic_updater_{this};
-  unsigned char system_status_ = diagnostic_msgs::msg::DiagnosticStatus::STALE;
+  
+   /**
+   * @brief Diagnostic status indicating node health
+   */
+  unsigned char health_ = diagnostic_msgs::msg::DiagnosticStatus::STALE;
+  /**
+   * @brief Topic diagnostic to diagnose a subscribed topic
+   */
   std::unique_ptr<diagnostic_updater::HeaderlessTopicDiagnostic> subscriber_diagnostic_;
+  
+  /**
+   * @brief Parameters for configuring subscriber diagnostic monitoring
+   */
   struct {
-    double freq_min = 0.5;
-    double freq_max = 5.0;
-    double freq_tolerance = 0.1;
-    int freq_window_size = 5;
+    double min_frequency = 0.5;           ///< Minimum expected message frequency (Hz)
+    double max_frequency = 5.0;           ///< Maximum expected message frequency (Hz)
+    double frequency_tolerance = 0.1;     ///< Tolerance for frequency deviation. Acceptable values are from 'min_frequency*(1-frequency_tolerance)' to 'max_frequency*(1+frequency_tolerance)'.
+    int frequency_window_size = 5;        ///< Number of diagnostic calls (depending on 'diagnostic_updater.period' parameter) to consider in the frequency calculation. It should be large enough to get a reliable estimate of the frequency depending on the expected message rate in relation to the diagnostic updater period.
   } subscriber_diagnostic_params_;
 };
 
