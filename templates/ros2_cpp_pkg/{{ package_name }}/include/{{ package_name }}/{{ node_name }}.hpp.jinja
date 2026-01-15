@@ -253,6 +253,11 @@ class {{ node_class_name }} : public rclcpp::Node {
    * @brief Function called by diagnostic updater to populate diagnostics status
    */
   void health(diagnostic_updater::DiagnosticStatusWrapper &stat);
+
+  /**
+   * @brief Sets the health information published by diagnostic updater
+   */
+  void setHealth(const unsigned char status, const std::string& msg, const std::map<std::string, std::string>& key_value_pairs = {});
 {% endif %}
 {% if auto_shutdown %}
 
@@ -333,7 +338,11 @@ class {{ node_class_name }} : public rclcpp::Node {
    /**
    * @brief Diagnostic status indicating node health
    */
-  unsigned char health_ = diagnostic_msgs::msg::DiagnosticStatus::STALE;
+  struct DiagnosticStatus {
+    unsigned char status = diagnostic_msgs::msg::DiagnosticStatus::STALE;
+    std::string message = "";
+    std::map<std::string, std::string> key_value_pairs = {};
+  } health_;
 {% if has_subscriber %}
 
   /**

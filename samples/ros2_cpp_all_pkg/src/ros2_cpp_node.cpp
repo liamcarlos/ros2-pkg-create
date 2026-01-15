@@ -275,22 +275,33 @@ void Ros2CppNode::timerCallback() {
 
 void Ros2CppNode::health(diagnostic_updater::DiagnosticStatusWrapper& stat) {
 
-  // TODO: fill diagnostic status message appropriately based on current system state
-  if(health_ == diagnostic_msgs::msg::DiagnosticStatus::ERROR) {
-    stat.summary(diagnostic_msgs::msg::DiagnosticStatus::ERROR, "Node is non-functional, unable to obtain, and/or yielding implausible data.");
-    health_ = diagnostic_msgs::msg::DiagnosticStatus::WARN;
-  } else if(health_ == diagnostic_msgs::msg::DiagnosticStatus::WARN) {
-    stat.summary(diagnostic_msgs::msg::DiagnosticStatus::WARN, "Node is able to assess its own performance level, but is not able to reach its desired performance level.");
-    health_ = diagnostic_msgs::msg::DiagnosticStatus::OK;
-  } else if(health_ == diagnostic_msgs::msg::DiagnosticStatus::OK) {
-    stat.summary(diagnostic_msgs::msg::DiagnosticStatus::OK, "Node is able to assess its own performance level and is reaching its desired performance level.");
-    health_ = diagnostic_msgs::msg::DiagnosticStatus::STALE;
+  // TODO: Remove this demonstration of health status and implement real health checks using `setHealth()`
+  if(health_.status == diagnostic_msgs::msg::DiagnosticStatus::ERROR) {
+    setHealth(diagnostic_msgs::msg::DiagnosticStatus::ERROR, "Node is non-functional, unable to obtain, and/or yielding implausible data.", { {"uptime", std::to_string(this->get_clock()->now().seconds())} });
+    health_.status = diagnostic_msgs::msg::DiagnosticStatus::WARN;
+  } else if(health_.status == diagnostic_msgs::msg::DiagnosticStatus::WARN) {
+    setHealth(diagnostic_msgs::msg::DiagnosticStatus::WARN, "Node is able to assess its own performance level, but is not able to reach its desired performance level.");
+    health_.status = diagnostic_msgs::msg::DiagnosticStatus::OK;
+  } else if(health_.status == diagnostic_msgs::msg::DiagnosticStatus::OK) {
+    setHealth(diagnostic_msgs::msg::DiagnosticStatus::OK, "Node is able to assess its own performance level and is reaching its desired performance level.");
+    health_.status = diagnostic_msgs::msg::DiagnosticStatus::STALE;
   } else {
-    stat.summary(diagnostic_msgs::msg::DiagnosticStatus::STALE, "Node performance level cannot be assessed");
-    health_ = diagnostic_msgs::msg::DiagnosticStatus::ERROR;
+    setHealth(diagnostic_msgs::msg::DiagnosticStatus::STALE, "Node performance level cannot be assessed");
+    health_.status = diagnostic_msgs::msg::DiagnosticStatus::ERROR;
   }
-  // optional: add custom key-value pairs to diagnostics status
-  stat.add("Dummy Status Key", "Dummy Status Value");
+  // end of demonstration
+
+  stat.summary(health_.status, health_.message);
+  for (const auto& [key, value] : health_.key_value_pairs) {
+    stat.add(key, value);
+  }
+}
+
+
+void Ros2CppNode::setHealth(const unsigned char status, const std::string& msg, const std::map<std::string, std::string>& key_value_pairs) {
+  health_.status = status;
+  health_.message = msg;
+  health_.key_value_pairs = key_value_pairs;
 }
 
 
