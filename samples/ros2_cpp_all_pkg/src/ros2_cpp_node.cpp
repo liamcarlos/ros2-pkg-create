@@ -125,11 +125,11 @@ void Ros2CppNode::setup() {
   parameters_callback_ = this->add_on_set_parameters_callback(std::bind(&Ros2CppNode::parametersCallback, this, std::placeholders::_1));
 
   // subscriber for handling incoming messages
-  subscriber_ = this->create_subscription<std_msgs::msg::Int32>("~/input", 10, std::bind(&Ros2CppNode::topicCallback, this, std::placeholders::_1));
+  subscriber_ = this->create_subscription<geometry_msgs::msg::PointStamped>("~/input", 10, std::bind(&Ros2CppNode::topicCallback, this, std::placeholders::_1));
   RCLCPP_INFO(this->get_logger(), "Subscribed to '%s'", subscriber_->get_topic_name());
 
   // publisher for publishing outgoing messages
-  publisher_ = this->create_publisher<std_msgs::msg::Int32>("~/output", 10);
+  publisher_ = this->create_publisher<geometry_msgs::msg::PointStamped>("~/output", 10);
   RCLCPP_INFO(this->get_logger(), "Publishing to '%s'", publisher_->get_topic_name());
 
   // service server for handling service calls
@@ -147,23 +147,24 @@ void Ros2CppNode::setup() {
   // setup diagnostic updater
   diagnostic_updater_.setHardwareID("none");
   diagnostic_updater_.add("Health", this, &Ros2CppNode::health);
-  topic_diagnostic_ = std::make_unique<diagnostic_updater::HeaderlessTopicDiagnostic>(
+  topic_diagnostic_ = std::make_unique<diagnostic_updater::TopicDiagnostic>(
     "~/input",
     diagnostic_updater_,
-    diagnostic_updater::FrequencyStatusParam(&topic_diagnostic_min_frequency_, &topic_diagnostic_max_frequency_, topic_diagnostic_frequency_tolerance_, topic_diagnostic_frequency_window_size_)
+    diagnostic_updater::FrequencyStatusParam(&topic_diagnostic_min_frequency_, &topic_diagnostic_max_frequency_, topic_diagnostic_frequency_tolerance_, topic_diagnostic_frequency_window_size_),
+    diagnostic_updater::TimeStampStatusParam(topic_diagnostic_min_acceptable_stamp_delta_, topic_diagnostic_max_acceptable_stamp_delta_)
   );
 }
 
 
-void Ros2CppNode::topicCallback(const std_msgs::msg::Int32::ConstSharedPtr& msg) {
+void Ros2CppNode::topicCallback(const geometry_msgs::msg::PointStamped::ConstSharedPtr& msg) {
 
-  topic_diagnostic_->tick();
-  RCLCPP_INFO(this->get_logger(), "Message received: '%d'", msg->data);
+  topic_diagnostic_->tick(msg->header.stamp);
+  RCLCPP_INFO(this->get_logger(), "Message received with stamp: '%d'", msg->header.stamp.sec);
 
   // publish message
-  std_msgs::msg::Int32::UniquePtr out_msg = std::make_unique<std_msgs::msg::Int32>();
-  out_msg->data = msg->data;
-  RCLCPP_INFO(this->get_logger(), "Message published: '%d'", out_msg->data);
+  geometry_msgs::msg::PointStamped::UniquePtr out_msg = std::make_unique<geometry_msgs::msg::PointStamped>();
+  *out_msg = *msg;
+  RCLCPP_INFO(this->get_logger(), "Message published with stamp: '%d'", out_msg->header.stamp.sec);
   publisher_->publish(std::move(out_msg));
 }
 

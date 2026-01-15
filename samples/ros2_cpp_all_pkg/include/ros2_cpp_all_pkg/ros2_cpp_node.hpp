@@ -6,13 +6,13 @@
 
 #include <diagnostic_updater/diagnostic_updater.hpp>
 #include <diagnostic_updater/publisher.hpp>
+#include <geometry_msgs/msg/point_stamped.hpp>
 #include <lifecycle_msgs/msg/state.hpp>
 #include <lifecycle_msgs/msg/transition.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp_action/rclcpp_action.hpp>
 #include <rclcpp_lifecycle/lifecycle_node.hpp>
 #include <rclcpp_lifecycle/lifecycle_publisher.hpp>
-#include <std_msgs/msg/int32.hpp>
 #include <std_srvs/srv/set_bool.hpp>
 
 #include <ros2_cpp_all_pkg_interfaces/action/fibonacci.hpp>
@@ -127,7 +127,7 @@ class Ros2CppNode : public rclcpp_lifecycle::LifecycleNode {
    *
    * @param msg message
    */
-  void topicCallback(const std_msgs::msg::Int32::ConstSharedPtr& msg);
+  void topicCallback(const geometry_msgs::msg::PointStamped::ConstSharedPtr& msg);
 
   /**
    * @brief Processes service requests
@@ -193,12 +193,12 @@ class Ros2CppNode : public rclcpp_lifecycle::LifecycleNode {
   /**
    * @brief Subscriber
    */
-  rclcpp::Subscription<std_msgs::msg::Int32>::SharedPtr subscriber_;
+  rclcpp::Subscription<geometry_msgs::msg::PointStamped>::SharedPtr subscriber_;
 
   /**
    * @brief Publisher
    */
-  rclcpp_lifecycle::LifecyclePublisher<std_msgs::msg::Int32>::SharedPtr publisher_;
+  rclcpp_lifecycle::LifecyclePublisher<geometry_msgs::msg::PointStamped>::SharedPtr publisher_;
 
   /**
    * @brief Service server
@@ -232,7 +232,7 @@ class Ros2CppNode : public rclcpp_lifecycle::LifecycleNode {
   /**
    * @brief Topic diagnostic to auto-diagnose a subscribed topic
    */
-  std::unique_ptr<diagnostic_updater::HeaderlessTopicDiagnostic> topic_diagnostic_;
+  std::unique_ptr<diagnostic_updater::TopicDiagnostic> topic_diagnostic_;
   
   /**
    * @brief Minimum acceptable frequency of auto-diagnosed topic subscription
@@ -257,7 +257,16 @@ class Ros2CppNode : public rclcpp_lifecycle::LifecycleNode {
    * on the expected message rate in relation to the diagnostic updater period.
    */
   const int topic_diagnostic_frequency_window_size_ = 5;
-  
+
+  /**
+   * @brief Minimum acceptable difference between message timestamp and receipt time (in seconds)
+   */
+  const double topic_diagnostic_min_acceptable_stamp_delta_ = -1.0;
+
+  /**
+   * @brief Maximum acceptable difference between message timestamp and receipt time (in seconds)
+   */
+  const double topic_diagnostic_max_acceptable_stamp_delta_ = 5.0;  
 };
 
 
