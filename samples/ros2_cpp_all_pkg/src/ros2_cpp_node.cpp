@@ -153,6 +153,12 @@ void Ros2CppNode::setup() {
     diagnostic_updater::FrequencyStatusParam(&topic_diagnostic_min_frequency_, &topic_diagnostic_max_frequency_, topic_diagnostic_frequency_tolerance_, topic_diagnostic_frequency_window_size_),
     diagnostic_updater::TimeStampStatusParam(topic_diagnostic_min_acceptable_stamp_delta_, topic_diagnostic_max_acceptable_stamp_delta_)
   );
+  diagnosed_publisher_ = std::make_unique<diagnostic_updater::DiagnosedPublisher<geometry_msgs::msg::PointStamped>>(
+    publisher_,
+    diagnostic_updater_,
+    diagnostic_updater::FrequencyStatusParam(&diagnosed_publisher_min_frequency_, &diagnosed_publisher_max_frequency_, diagnosed_publisher_frequency_tolerance_, diagnosed_publisher_frequency_window_size_),
+    diagnostic_updater::TimeStampStatusParam(diagnosed_publisher_min_acceptable_stamp_delta_, diagnosed_publisher_max_acceptable_stamp_delta_)
+  );
 }
 
 
@@ -165,7 +171,7 @@ void Ros2CppNode::topicCallback(const geometry_msgs::msg::PointStamped::ConstSha
   geometry_msgs::msg::PointStamped::UniquePtr out_msg = std::make_unique<geometry_msgs::msg::PointStamped>();
   *out_msg = *msg;
   RCLCPP_INFO(this->get_logger(), "Message published with stamp: '%d'", out_msg->header.stamp.sec);
-  publisher_->publish(std::move(out_msg));
+  diagnosed_publisher_->publish(std::move(out_msg));
 }
 
 

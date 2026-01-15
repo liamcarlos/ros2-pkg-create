@@ -307,6 +307,7 @@ class {{ node_class_name }} : public rclcpp::Node {
    */
   unsigned char health_ = diagnostic_msgs::msg::DiagnosticStatus::STALE;
 {% if has_subscriber %}
+
   /**
    * @brief Topic diagnostic to auto-diagnose a subscribed topic
    */
@@ -345,6 +346,47 @@ class {{ node_class_name }} : public rclcpp::Node {
    * @brief Maximum acceptable difference between message timestamp and receipt time (in seconds)
    */
   const double topic_diagnostic_max_acceptable_stamp_delta_ = 5.0;  
+{% endif %}
+{% if has_publisher %}
+
+  /**
+   * @brief Diagnosed publisher
+   */
+  std::unique_ptr<diagnostic_updater::DiagnosedPublisher<geometry_msgs::msg::PointStamped>> diagnosed_publisher_;
+
+  /**
+   * @brief Minimum acceptable frequency of auto-diagnosed publisher
+   */
+  double diagnosed_publisher_min_frequency_ = 1.0;
+  
+  /**
+   * @brief Maximum acceptable frequency of auto-diagnosed publisher
+   */
+  double diagnosed_publisher_max_frequency_ = 1.0;
+  
+  /**
+   * @brief Tolerance for frequency deviation.
+   * Acceptable frequencies are from `min_frequency * (1 - frequency_tolerance)`
+   * to `max_frequency * (1 + frequency_tolerance)`.
+   */
+  const double diagnosed_publisher_frequency_tolerance_ = 0.1;
+  
+  /**
+   * @brief Number of diagnostic calls to consider in the frequency calculation.
+   * It should be large enough to get a reliable estimate of the frequency depending
+   * on the expected message rate in relation to the diagnostic updater period.
+   */
+  const int diagnosed_publisher_frequency_window_size_ = 5;
+
+  /**
+   * @brief Minimum acceptable difference between message timestamp and receipt time (in seconds)
+   */
+  const double diagnosed_publisher_min_acceptable_stamp_delta_ = -1.0;
+
+  /**
+   * @brief Maximum acceptable difference between message timestamp and receipt time (in seconds)
+   */
+  const double diagnosed_publisher_max_acceptable_stamp_delta_ = 5.0;  
 {% endif %}
 {% endif %}
 {% if auto_shutdown %}
