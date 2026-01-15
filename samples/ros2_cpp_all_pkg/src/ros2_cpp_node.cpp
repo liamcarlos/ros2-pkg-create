@@ -147,17 +147,23 @@ void Ros2CppNode::setup() {
   // setup diagnostic updater
   diagnostic_updater_.setHardwareID("none");
   diagnostic_updater_.add("Health", this, &Ros2CppNode::health);
+
+  // add diagnostic task for monitoring topic subscription with a moving average over min. 5 incoming messages based on expected minimum frequency
+  const int topic_diagnostic_frequency_window_size = std::ceil(5 / (diagnostic_updater_.getPeriod().seconds() * topic_diagnostic_config_.min_frequency));
   topic_diagnostic_ = std::make_unique<diagnostic_updater::TopicDiagnostic>(
     "~/input",
     diagnostic_updater_,
-    diagnostic_updater::FrequencyStatusParam(&topic_diagnostic_min_frequency_, &topic_diagnostic_max_frequency_, topic_diagnostic_frequency_tolerance_, topic_diagnostic_frequency_window_size_),
-    diagnostic_updater::TimeStampStatusParam(topic_diagnostic_min_acceptable_stamp_delta_, topic_diagnostic_max_acceptable_stamp_delta_)
+    diagnostic_updater::FrequencyStatusParam(&topic_diagnostic_config_.min_frequency, &topic_diagnostic_config_.max_frequency, 0.0, topic_diagnostic_frequency_window_size),
+    diagnostic_updater::TimeStampStatusParam(topic_diagnostic_config_.min_acceptable_timestamp_delta, topic_diagnostic_config_.max_acceptable_timestamp_delta)
   );
+
+  // add diagnostic task for monitoring topic publisher with a moving average over min. 5 incoming messages based on expected minimum frequency
+  const int diagnosed_publisher_frequency_window_size = std::ceil(5 / (diagnostic_updater_.getPeriod().seconds() * diagnosed_publisher_config_.min_frequency));
   diagnosed_publisher_ = std::make_unique<diagnostic_updater::DiagnosedPublisher<geometry_msgs::msg::PointStamped>>(
     publisher_,
     diagnostic_updater_,
-    diagnostic_updater::FrequencyStatusParam(&diagnosed_publisher_min_frequency_, &diagnosed_publisher_max_frequency_, diagnosed_publisher_frequency_tolerance_, diagnosed_publisher_frequency_window_size_),
-    diagnostic_updater::TimeStampStatusParam(diagnosed_publisher_min_acceptable_stamp_delta_, diagnosed_publisher_max_acceptable_stamp_delta_)
+    diagnostic_updater::FrequencyStatusParam(&diagnosed_publisher_config_.min_frequency, &diagnosed_publisher_config_.max_frequency, 0.0, diagnosed_publisher_frequency_window_size),
+    diagnostic_updater::TimeStampStatusParam(diagnosed_publisher_config_.min_acceptable_timestamp_delta, diagnosed_publisher_config_.max_acceptable_timestamp_delta)
   );
 }
 
@@ -293,6 +299,14 @@ rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn Ros2Cp
   RCLCPP_INFO(get_logger(), "Configuring to enter 'inactive' state from '%s' state", state.label().c_str());
 
   this->declareAndLoadParameter("param", param_, "TODO", true, false, false, 0.0, 10.0, 1.0);
+  this->declareAndLoadParameter("topic_diagnostic.min_frequency", topic_diagnostic_config_.min_frequency, "Minimum frequency for incoming messages", true, true, false);
+  this->declareAndLoadParameter("topic_diagnostic.max_frequency", topic_diagnostic_config_.max_frequency, "Maximum frequency for incoming messages", true, true, false);
+  this->declareAndLoadParameter("topic_diagnostic.min_acceptable_timestamp_delta", topic_diagnostic_config_.min_acceptable_timestamp_delta, "Minimum acceptable timestamp delta for incoming messages", true, true, false);
+  this->declareAndLoadParameter("topic_diagnostic.max_acceptable_timestamp_delta", topic_diagnostic_config_.max_acceptable_timestamp_delta, "Maximum acceptable timestamp delta for incoming messages", true, true, false);
+  this->declareAndLoadParameter("diagnosed_publisher.min_frequency", diagnosed_publisher_config_.min_frequency, "Minimum frequency for outgoing messages", true, true, false);
+  this->declareAndLoadParameter("diagnosed_publisher.max_frequency", diagnosed_publisher_config_.max_frequency, "Maximum frequency for outgoing messages", true, true, false);
+  this->declareAndLoadParameter("diagnosed_publisher.min_acceptable_timestamp_delta", diagnosed_publisher_config_.min_acceptable_timestamp_delta, "Minimum acceptable timestamp delta for outgoing messages", true, true, false);
+  this->declareAndLoadParameter("diagnosed_publisher.max_acceptable_timestamp_delta", diagnosed_publisher_config_.max_acceptable_timestamp_delta, "Maximum acceptable timestamp delta for outgoing messages", true, true, false);
   setup();
 
   return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;

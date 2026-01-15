@@ -41,6 +41,34 @@ template <typename C> struct is_vector : std::false_type {};
 template <typename T,typename A> struct is_vector< std::vector<T,A> > : std::true_type {};
 template <typename C> inline constexpr bool is_vector_v = is_vector<C>::value;
 {% endif %}
+{% if has_diagnostics %}
+
+
+/**
+ * @brief Configuration parameters for topic diagnostics
+ */
+struct TopicDiagnosticConfig {
+  /**
+   * @brief Minimum acceptable frequency
+   */
+  double min_frequency;
+  
+  /**
+   * @brief Maximum acceptable frequency
+   */
+  double max_frequency;
+  
+  /**
+   * @brief Minimum acceptable difference between message timestamp and receipt time (in seconds)
+   */
+  double min_acceptable_timestamp_delta;
+
+  /**
+   * @brief Maximum acceptable difference between message timestamp and receipt time (in seconds)
+   */
+  double max_acceptable_timestamp_delta;
+};
+{% endif %}
 
 
 /**
@@ -312,40 +340,11 @@ class {{ node_class_name }} : public rclcpp::Node {
    * @brief Topic diagnostic to auto-diagnose a subscribed topic
    */
   std::unique_ptr<diagnostic_updater::TopicDiagnostic> topic_diagnostic_;
-  
-  /**
-   * @brief Minimum acceptable frequency of auto-diagnosed topic subscription
-   */
-  double topic_diagnostic_min_frequency_ = 1.0;
-  
-  /**
-   * @brief Maximum acceptable frequency of auto-diagnosed topic subscription
-   */
-  double topic_diagnostic_max_frequency_ = 1.0;
-  
-  /**
-   * @brief Tolerance for frequency deviation.
-   * Acceptable frequencies are from `min_frequency * (1 - frequency_tolerance)`
-   * to `max_frequency * (1 + frequency_tolerance)`.
-   */
-  const double topic_diagnostic_frequency_tolerance_ = 0.1;
-  
-  /**
-   * @brief Number of diagnostic calls to consider in the frequency calculation.
-   * It should be large enough to get a reliable estimate of the frequency depending
-   * on the expected message rate in relation to the diagnostic updater period.
-   */
-  const int topic_diagnostic_frequency_window_size_ = 5;
 
   /**
-   * @brief Minimum acceptable difference between message timestamp and receipt time (in seconds)
+   * @brief Configuration for auto-diagnosed topic subscription
    */
-  const double topic_diagnostic_min_acceptable_stamp_delta_ = -1.0;
-
-  /**
-   * @brief Maximum acceptable difference between message timestamp and receipt time (in seconds)
-   */
-  const double topic_diagnostic_max_acceptable_stamp_delta_ = 5.0;  
+  TopicDiagnosticConfig topic_diagnostic_config_;
 {% endif %}
 {% if has_publisher %}
 
@@ -355,38 +354,9 @@ class {{ node_class_name }} : public rclcpp::Node {
   std::unique_ptr<diagnostic_updater::DiagnosedPublisher<geometry_msgs::msg::PointStamped>> diagnosed_publisher_;
 
   /**
-   * @brief Minimum acceptable frequency of auto-diagnosed publisher
+   * @brief Configuration for auto-diagnosed publisher
    */
-  double diagnosed_publisher_min_frequency_ = 1.0;
-  
-  /**
-   * @brief Maximum acceptable frequency of auto-diagnosed publisher
-   */
-  double diagnosed_publisher_max_frequency_ = 1.0;
-  
-  /**
-   * @brief Tolerance for frequency deviation.
-   * Acceptable frequencies are from `min_frequency * (1 - frequency_tolerance)`
-   * to `max_frequency * (1 + frequency_tolerance)`.
-   */
-  const double diagnosed_publisher_frequency_tolerance_ = 0.1;
-  
-  /**
-   * @brief Number of diagnostic calls to consider in the frequency calculation.
-   * It should be large enough to get a reliable estimate of the frequency depending
-   * on the expected message rate in relation to the diagnostic updater period.
-   */
-  const int diagnosed_publisher_frequency_window_size_ = 5;
-
-  /**
-   * @brief Minimum acceptable difference between message timestamp and receipt time (in seconds)
-   */
-  const double diagnosed_publisher_min_acceptable_stamp_delta_ = -1.0;
-
-  /**
-   * @brief Maximum acceptable difference between message timestamp and receipt time (in seconds)
-   */
-  const double diagnosed_publisher_max_acceptable_stamp_delta_ = 5.0;  
+  TopicDiagnosticConfig diagnosed_publisher_config_;  
 {% endif %}
 {% endif %}
 {% if auto_shutdown %}
