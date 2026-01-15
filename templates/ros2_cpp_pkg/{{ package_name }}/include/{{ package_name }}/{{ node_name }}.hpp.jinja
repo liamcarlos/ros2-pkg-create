@@ -310,7 +310,7 @@ class {{ node_class_name }} : public rclcpp::Node {
   /**
    * @brief Topic diagnostic to auto-diagnose a subscribed topic
    */
-  std::unique_ptr<diagnostic_updater::HeaderlessTopicDiagnostic> topic_diagnostic_;
+  std::unique_ptr<diagnostic_updater::TopicDiagnostic> topic_diagnostic_;
   
   /**
    * @brief Minimum acceptable frequency of auto-diagnosed topic subscription
@@ -335,7 +335,16 @@ class {{ node_class_name }} : public rclcpp::Node {
    * on the expected message rate in relation to the diagnostic updater period.
    */
   const int topic_diagnostic_frequency_window_size_ = 5;
-  
+
+  /**
+   * @brief Minimum acceptable difference between message timestamp and receipt time (in seconds)
+   */
+  const double topic_diagnostic_min_acceptable_stamp_delta_ = -1.0;
+
+  /**
+   * @brief Maximum acceptable difference between message timestamp and receipt time (in seconds)
+   */
+  const double topic_diagnostic_max_acceptable_stamp_delta_ = 5.0;  
 {% endif %}
 {% endif %}
 {% if auto_shutdown %}
