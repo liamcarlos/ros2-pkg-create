@@ -194,6 +194,7 @@ jobs:
         shell: bash
         run: |
           source /opt/ros/$ROS_DISTRO/setup.bash
+          rosdep install -i --from-paths src -y
           colcon build --packages-up-to ${{ matrix.package }}
       - name: Run
         shell: bash
