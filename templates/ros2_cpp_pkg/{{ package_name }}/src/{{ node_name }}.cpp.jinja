@@ -44,6 +44,20 @@ namespace {{ package_name }} {
 {% if has_params %}
   this->declareAndLoadParameter("param", param_, "TODO", true, false, false, 0.0, 10.0, 1.0);
 {% endif %}
+{% if has_diagnostics %}
+{% if has_subscriber %}
+  this->declareAndLoadParameter("diagnostic_updater.topic_diagnostic.min_frequency", topic_diagnostic_config_.min_frequency, "Minimum frequency for incoming messages", true, true, false);
+  this->declareAndLoadParameter("diagnostic_updater.topic_diagnostic.max_frequency", topic_diagnostic_config_.max_frequency, "Maximum frequency for incoming messages", true, true, false);
+  this->declareAndLoadParameter("diagnostic_updater.topic_diagnostic.min_acceptable_timestamp_delta", topic_diagnostic_config_.min_acceptable_timestamp_delta, "Minimum acceptable timestamp delta for incoming messages", true, true, false);
+  this->declareAndLoadParameter("diagnostic_updater.topic_diagnostic.max_acceptable_timestamp_delta", topic_diagnostic_config_.max_acceptable_timestamp_delta, "Maximum acceptable timestamp delta for incoming messages", true, true, false);
+{% endif %}
+{% if has_publisher %}
+  this->declareAndLoadParameter("diagnostic_updater.diagnosed_publisher.min_frequency", diagnosed_publisher_config_.min_frequency, "Minimum frequency for outgoing messages", true, true, false);
+  this->declareAndLoadParameter("diagnostic_updater.diagnosed_publisher.max_frequency", diagnosed_publisher_config_.max_frequency, "Maximum frequency for outgoing messages", true, true, false);
+  this->declareAndLoadParameter("diagnostic_updater.diagnosed_publisher.min_acceptable_timestamp_delta", diagnosed_publisher_config_.min_acceptable_timestamp_delta, "Minimum acceptable timestamp delta for outgoing messages", true, true, false);
+  this->declareAndLoadParameter("diagnostic_updater.diagnosed_publisher.max_acceptable_timestamp_delta", diagnosed_publisher_config_.max_acceptable_timestamp_delta, "Maximum acceptable timestamp delta for outgoing messages", true, true, false);
+{% endif %}
+{% endif %}
   this->setup();
 {% endif %}
 }
