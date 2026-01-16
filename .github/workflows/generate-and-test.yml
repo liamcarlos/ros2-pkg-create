@@ -195,7 +195,7 @@ jobs:
         run: |
           source /opt/ros/$ROS_DISTRO/setup.bash
           apt update && rosdep update
-          rosdep install -i --from-paths src -y
+          rosdep install -i --from-paths . -y
       - name: Build
         shell: bash
         run: |
