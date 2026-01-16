@@ -61,7 +61,7 @@ namespace {{ package_name }} {
   this->setup();
 {% endif %}
 }
-{% if has_params or is_lifecycle %}
+{% if has_params or is_lifecycle or has_diagnostics %}
 
 
 template <typename T>

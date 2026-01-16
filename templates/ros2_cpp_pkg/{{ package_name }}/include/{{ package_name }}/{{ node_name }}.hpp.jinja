@@ -36,7 +36,7 @@
 
 namespace {{ package_name }} {
 
-{% if has_params or is_lifecycle %}
+{% if has_params or is_lifecycle or has_diagnostics %}
 template <typename C> struct is_vector : std::false_type {};
 template <typename T,typename A> struct is_vector< std::vector<T,A> > : std::true_type {};
 template <typename C> inline constexpr bool is_vector_v = is_vector<C>::value;
@@ -145,7 +145,7 @@ class {{ node_class_name }} : public rclcpp::Node {
 {% endif %}
 
  private:
-{% if has_params or is_lifecycle %}
+{% if has_params or is_lifecycle or has_diagnostics %}
 
   /**
    * @brief Declares and loads a ROS parameter
@@ -268,7 +268,7 @@ class {{ node_class_name }} : public rclcpp::Node {
 {% endif %}
 
  private:
-{% if has_params or is_lifecycle %}
+{% if has_params or is_lifecycle or has_diagnostics %}
 
   /**
    * @brief Auto-reconfigurable parameters for dynamic reconfiguration

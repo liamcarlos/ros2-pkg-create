@@ -1,6 +1,8 @@
 /**/*:
   ros__parameters:
+{% if has_params %}
     param: 1.0
+{% endif %}
 {% if has_diagnostics %}
     diagnostic_updater:
       period: 1.0
