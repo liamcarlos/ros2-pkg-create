@@ -14,8 +14,10 @@
 {% if has_diagnostics %}
   <depend>diagnostic_updater</depend>
 {% endif %}
+{% if has_subscriber or has_publisher %}
+  <depend>geometry_msgs</depend>
+{% endif %}
   <depend>rclpy</depend>
-  <depend>std_msgs</depend>
 {% if has_service_server %}
   <depend>std_srvs</depend>
 {% endif %}
