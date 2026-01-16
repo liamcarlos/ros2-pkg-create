@@ -6,7 +6,7 @@
 
 {% if has_diagnostics %}
 #include <diagnostic_updater/diagnostic_updater.hpp>
-{% if has_subscriber %}
+{% if has_subscriber or has_publisher %}
 #include <diagnostic_updater/publisher.hpp>
 {% endif %}
 {% endif %}
