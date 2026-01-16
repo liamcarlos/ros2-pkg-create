@@ -190,11 +190,16 @@ jobs:
         uses: actions/checkout@v4
       - name: Download artifacts
         uses: actions/download-artifact@v4
+      - name: Install dependencies
+        shell: bash
+        run: |
+          source /opt/ros/$ROS_DISTRO/setup.bash
+          apt update && rosdep update
+          rosdep install -i --from-paths src -y
       - name: Build
         shell: bash
         run: |
           source /opt/ros/$ROS_DISTRO/setup.bash
-          rosdep install -i --from-paths src -y
           colcon build --packages-up-to ${{ matrix.package }}
       - name: Run
         shell: bash
