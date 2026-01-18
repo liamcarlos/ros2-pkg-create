@@ -270,10 +270,6 @@ void Ros2CppNode::actionExecute(const std::shared_ptr<rclcpp_action::ServerGoalH
 void Ros2CppNode::timerCallback() {
 
   RCLCPP_INFO(this->get_logger(), "Timer triggered");
-}
-
-
-void Ros2CppNode::health(diagnostic_updater::DiagnosticStatusWrapper& stat) {
 
   // TODO: Remove this demonstration of health status and implement real health checks using `setHealth()`
   if(health_.status == diagnostic_msgs::msg::DiagnosticStatus::ERROR) {
@@ -290,6 +286,10 @@ void Ros2CppNode::health(diagnostic_updater::DiagnosticStatusWrapper& stat) {
     health_.status = diagnostic_msgs::msg::DiagnosticStatus::ERROR;
   }
   // end of demonstration
+}
+
+
+void Ros2CppNode::health(diagnostic_updater::DiagnosticStatusWrapper& stat) {
 
   stat.summary(health_.status, health_.message);
   for (const auto& [key, value] : health_.key_value_pairs) {
@@ -299,9 +299,11 @@ void Ros2CppNode::health(diagnostic_updater::DiagnosticStatusWrapper& stat) {
 
 
 void Ros2CppNode::setHealth(const unsigned char status, const std::string& msg, const std::map<std::string, std::string>& key_value_pairs) {
+
   health_.status = status;
   health_.message = msg;
   health_.key_value_pairs = key_value_pairs;
+  diagnostic_updater_.force_update();
 }
 
 

@@ -351,10 +351,6 @@ class Ros2PythonNode(Node):
 
         self.get_logger().info("Timer triggered")
 
-    def health(self, stat: DiagnosticStatusWrapper) -> DiagnosticStatusWrapper:
-        """Function called by diagnostic updater to populate diagnostics status
-        """
-
         # TODO: Remove this demonstration of health status and implement real health checks using `setHealth()`
         if self.health_.status == DiagnosticStatus.ERROR:
             self.setHealth(DiagnosticStatus.ERROR, "Node is non-functional, unable to obtain, and/or yielding implausible data.", {"uptime": f"{self.get_clock().now().nanoseconds / 1e9}"})
@@ -369,6 +365,10 @@ class Ros2PythonNode(Node):
             self.setHealth(DiagnosticStatus.STALE, "Node performance level cannot be assessed")
             self.health_.status = DiagnosticStatus.ERROR
         # end of demonstration
+
+    def health(self, stat: DiagnosticStatusWrapper) -> DiagnosticStatusWrapper:
+        """Function called by diagnostic updater to populate diagnostics status
+        """
 
         stat.summary(self.health_.status, self.health_.msg)
         if self.health_.key_value_pairs is not None:
@@ -386,6 +386,7 @@ class Ros2PythonNode(Node):
         """
 
         self.health_ = Health(status, msg, key_value_pairs)
+        self.diagnostic_updater.force_update()
 
 
 def main():

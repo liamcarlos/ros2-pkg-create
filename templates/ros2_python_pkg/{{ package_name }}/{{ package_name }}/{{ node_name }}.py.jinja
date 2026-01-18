@@ -423,12 +423,7 @@ class {{ node_class_name }}(Node):
         """
 
         self.get_logger().info("Timer triggered")
-{% endif %}
 {% if has_diagnostics %}
-
-    def health(self, stat: DiagnosticStatusWrapper) -> DiagnosticStatusWrapper:
-        """Function called by diagnostic updater to populate diagnostics status
-        """
 
         # TODO: Remove this demonstration of health status and implement real health checks using `setHealth()`
         if self.health_.status == DiagnosticStatus.ERROR:
@@ -444,6 +439,13 @@ class {{ node_class_name }}(Node):
             self.setHealth(DiagnosticStatus.STALE, "Node performance level cannot be assessed")
             self.health_.status = DiagnosticStatus.ERROR
         # end of demonstration
+{% endif %}
+{% endif %}
+{% if has_diagnostics %}
+
+    def health(self, stat: DiagnosticStatusWrapper) -> DiagnosticStatusWrapper:
+        """Function called by diagnostic updater to populate diagnostics status
+        """
 
         stat.summary(self.health_.status, self.health_.msg)
         if self.health_.key_value_pairs is not None:
@@ -461,6 +463,7 @@ class {{ node_class_name }}(Node):
         """
 
         self.health_ = Health(status, msg, key_value_pairs)
+        self.diagnostic_updater.force_update()
 {% endif %}
 {% if auto_shutdown %}
 

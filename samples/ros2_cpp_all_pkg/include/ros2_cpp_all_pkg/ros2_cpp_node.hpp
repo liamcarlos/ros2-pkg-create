@@ -205,7 +205,7 @@ class Ros2CppNode : public rclcpp_lifecycle::LifecycleNode {
   void health(diagnostic_updater::DiagnosticStatusWrapper &stat);
 
   /**
-   * @brief Sets the health information published by diagnostic updater
+   * @brief Sets the health information and triggers publishing by diagnostic updater
    */
   void setHealth(const unsigned char status, const std::string& msg, const std::map<std::string, std::string>& key_value_pairs = {});
 
