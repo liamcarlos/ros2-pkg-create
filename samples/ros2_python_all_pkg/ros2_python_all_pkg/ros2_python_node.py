@@ -1,6 +1,7 @@
 import time
 from typing import Any, Optional, Union
 
+from dataclasses import dataclass
 from diagnostic_msgs.msg import DiagnosticStatus
 from diagnostic_updater import Updater
 from diagnostic_updater import TopicDiagnostic, FrequencyStatusParam, TimeStampStatusParam, DiagnosticStatusWrapper
@@ -15,18 +16,18 @@ from std_srvs.srv import SetBool
 from ros2_python_all_pkg_interfaces.action import Fibonacci
 
 
+@dataclass
 class TopicDiagnosticConfig:
-    def __init__(self, min_frequency: float, max_frequency: float, min_acceptable_timestamp_delta: float, max_acceptable_timestamp_delta: float):
-        self.min_frequency = min_frequency
-        self.max_frequency = max_frequency
-        self.min_acceptable_timestamp_delta = min_acceptable_timestamp_delta
-        self.max_acceptable_timestamp_delta = max_acceptable_timestamp_delta
+    min_frequency: float
+    max_frequency: float
+    min_acceptable_timestamp_delta: float
+    max_acceptable_timestamp_delta: float
 
+@dataclass
 class Health:
-    def __init__(self, status: DiagnosticStatus, msg: str, key_value_pairs: Optional[dict[str, str]] = None):
-        self.status = status
-        self.msg = msg
-        self.key_value_pairs = key_value_pairs
+    status: DiagnosticStatus
+    msg: str
+    key_value_pairs: Optional[dict[str, str]] = None
 
 
 class Ros2PythonNode(Node):
