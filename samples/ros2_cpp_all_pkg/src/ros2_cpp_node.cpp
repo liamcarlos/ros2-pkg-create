@@ -125,11 +125,11 @@ void Ros2CppNode::setup() {
   parameters_callback_ = this->add_on_set_parameters_callback(std::bind(&Ros2CppNode::parametersCallback, this, std::placeholders::_1));
 
   // subscriber for handling incoming messages
-  subscriber_ = this->create_subscription<std_msgs::msg::Int32>("~/input", 10, std::bind(&Ros2CppNode::topicCallback, this, std::placeholders::_1));
+  subscriber_ = this->create_subscription<geometry_msgs::msg::PointStamped>("~/input", 10, std::bind(&Ros2CppNode::topicCallback, this, std::placeholders::_1));
   RCLCPP_INFO(this->get_logger(), "Subscribed to '%s'", subscriber_->get_topic_name());
 
   // publisher for publishing outgoing messages
-  publisher_ = this->create_publisher<std_msgs::msg::Int32>("~/output", 10);
+  publisher_ = this->create_publisher<geometry_msgs::msg::PointStamped>("~/output", 10);
   RCLCPP_INFO(this->get_logger(), "Publishing to '%s'", publisher_->get_topic_name());
 
   // service server for handling service calls
@@ -143,18 +143,41 @@ void Ros2CppNode::setup() {
     std::bind(&Ros2CppNode::actionHandleCancel, this, std::placeholders::_1),
     std::bind(&Ros2CppNode::actionHandleAccepted, this, std::placeholders::_1)
   );
+
+  // setup diagnostic updater
+  diagnostic_updater_.setHardwareID("none");
+  diagnostic_updater_.add("Health", this, &Ros2CppNode::health);
+
+  // add diagnostic task for monitoring topic subscription with a moving average over min. 5 incoming messages based on expected minimum frequency
+  const int topic_diagnostic_frequency_window_size = std::ceil(5 / (diagnostic_updater_.getPeriod().seconds() * topic_diagnostic_config_.min_frequency));
+  topic_diagnostic_ = std::make_unique<diagnostic_updater::TopicDiagnostic>(
+    "~/input",
+    diagnostic_updater_,
+    diagnostic_updater::FrequencyStatusParam(&topic_diagnostic_config_.min_frequency, &topic_diagnostic_config_.max_frequency, 0.0, topic_diagnostic_frequency_window_size),
+    diagnostic_updater::TimeStampStatusParam(topic_diagnostic_config_.min_acceptable_timestamp_delta, topic_diagnostic_config_.max_acceptable_timestamp_delta)
+  );
+
+  // add diagnostic task for monitoring topic publisher with a moving average over min. 5 incoming messages based on expected minimum frequency
+  const int diagnosed_publisher_frequency_window_size = std::ceil(5 / (diagnostic_updater_.getPeriod().seconds() * diagnosed_publisher_config_.min_frequency));
+  diagnosed_publisher_ = std::make_unique<diagnostic_updater::DiagnosedPublisher<geometry_msgs::msg::PointStamped>>(
+    publisher_,
+    diagnostic_updater_,
+    diagnostic_updater::FrequencyStatusParam(&diagnosed_publisher_config_.min_frequency, &diagnosed_publisher_config_.max_frequency, 0.0, diagnosed_publisher_frequency_window_size),
+    diagnostic_updater::TimeStampStatusParam(diagnosed_publisher_config_.min_acceptable_timestamp_delta, diagnosed_publisher_config_.max_acceptable_timestamp_delta)
+  );
 }
 
 
-void Ros2CppNode::topicCallback(const std_msgs::msg::Int32::ConstSharedPtr& msg) {
+void Ros2CppNode::topicCallback(const geometry_msgs::msg::PointStamped::ConstSharedPtr& msg) {
 
-  RCLCPP_INFO(this->get_logger(), "Message received: '%d'", msg->data);
+  topic_diagnostic_->tick(msg->header.stamp);
+  RCLCPP_INFO(this->get_logger(), "Message received with stamp: '%d'", msg->header.stamp.sec);
 
   // publish message
-  std_msgs::msg::Int32::UniquePtr out_msg = std::make_unique<std_msgs::msg::Int32>();
-  out_msg->data = msg->data;
-  RCLCPP_INFO(this->get_logger(), "Message published: '%d'", out_msg->data);
-  publisher_->publish(std::move(out_msg));
+  geometry_msgs::msg::PointStamped::UniquePtr out_msg = std::make_unique<geometry_msgs::msg::PointStamped>();
+  *out_msg = *msg;
+  RCLCPP_INFO(this->get_logger(), "Message published with stamp: '%d'", out_msg->header.stamp.sec);
+  diagnosed_publisher_->publish(std::move(out_msg));
 }
 
 
@@ -247,6 +270,40 @@ void Ros2CppNode::actionExecute(const std::shared_ptr<rclcpp_action::ServerGoalH
 void Ros2CppNode::timerCallback() {
 
   RCLCPP_INFO(this->get_logger(), "Timer triggered");
+
+  // TODO: Remove this demonstration of health status and implement real health checks using `setHealth()`
+  if(health_.status == diagnostic_msgs::msg::DiagnosticStatus::ERROR) {
+    setHealth(diagnostic_msgs::msg::DiagnosticStatus::ERROR, "Node is non-functional, unable to obtain, and/or yielding implausible data.", { {"uptime", std::to_string(this->get_clock()->now().seconds())} });
+    health_.status = diagnostic_msgs::msg::DiagnosticStatus::WARN;
+  } else if(health_.status == diagnostic_msgs::msg::DiagnosticStatus::WARN) {
+    setHealth(diagnostic_msgs::msg::DiagnosticStatus::WARN, "Node is able to assess its own performance level, but is not able to reach its desired performance level.");
+    health_.status = diagnostic_msgs::msg::DiagnosticStatus::OK;
+  } else if(health_.status == diagnostic_msgs::msg::DiagnosticStatus::OK) {
+    setHealth(diagnostic_msgs::msg::DiagnosticStatus::OK, "Node is able to assess its own performance level and is reaching its desired performance level.");
+    health_.status = diagnostic_msgs::msg::DiagnosticStatus::STALE;
+  } else {
+    setHealth(diagnostic_msgs::msg::DiagnosticStatus::STALE, "Node performance level cannot be assessed");
+    health_.status = diagnostic_msgs::msg::DiagnosticStatus::ERROR;
+  }
+  // end of demonstration
+}
+
+
+void Ros2CppNode::health(diagnostic_updater::DiagnosticStatusWrapper& stat) {
+
+  stat.summary(health_.status, health_.message);
+  for (const auto& [key, value] : health_.key_value_pairs) {
+    stat.add(key, value);
+  }
+}
+
+
+void Ros2CppNode::setHealth(const unsigned char status, const std::string& msg, const std::map<std::string, std::string>& key_value_pairs) {
+
+  health_.status = status;
+  health_.message = msg;
+  health_.key_value_pairs = key_value_pairs;
+  diagnostic_updater_.force_update();
 }
 
 
@@ -255,6 +312,14 @@ rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn Ros2Cp
   RCLCPP_INFO(get_logger(), "Configuring to enter 'inactive' state from '%s' state", state.label().c_str());
 
   this->declareAndLoadParameter("param", param_, "TODO", true, false, false, 0.0, 10.0, 1.0);
+  this->declareAndLoadParameter("diagnostic_updater.topic_diagnostic.min_frequency", topic_diagnostic_config_.min_frequency, "Minimum frequency for incoming messages", true, true, false);
+  this->declareAndLoadParameter("diagnostic_updater.topic_diagnostic.max_frequency", topic_diagnostic_config_.max_frequency, "Maximum frequency for incoming messages", true, true, false);
+  this->declareAndLoadParameter("diagnostic_updater.topic_diagnostic.min_acceptable_timestamp_delta", topic_diagnostic_config_.min_acceptable_timestamp_delta, "Minimum acceptable timestamp delta for incoming messages", true, true, false);
+  this->declareAndLoadParameter("diagnostic_updater.topic_diagnostic.max_acceptable_timestamp_delta", topic_diagnostic_config_.max_acceptable_timestamp_delta, "Maximum acceptable timestamp delta for incoming messages", true, true, false);
+  this->declareAndLoadParameter("diagnostic_updater.diagnosed_publisher.min_frequency", diagnosed_publisher_config_.min_frequency, "Minimum frequency for outgoing messages", true, true, false);
+  this->declareAndLoadParameter("diagnostic_updater.diagnosed_publisher.max_frequency", diagnosed_publisher_config_.max_frequency, "Maximum frequency for outgoing messages", true, true, false);
+  this->declareAndLoadParameter("diagnostic_updater.diagnosed_publisher.min_acceptable_timestamp_delta", diagnosed_publisher_config_.min_acceptable_timestamp_delta, "Minimum acceptable timestamp delta for outgoing messages", true, true, false);
+  this->declareAndLoadParameter("diagnostic_updater.diagnosed_publisher.max_acceptable_timestamp_delta", diagnosed_publisher_config_.max_acceptable_timestamp_delta, "Maximum acceptable timestamp delta for outgoing messages", true, true, false);
   setup();
 
   return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;

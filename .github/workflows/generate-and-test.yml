@@ -38,6 +38,11 @@ jobs:
             template: ros2_cpp_pkg
             has_timer: true
             auto_shutdown: true
+          - package_name: diagnostics_cpp_pkg
+            template: ros2_cpp_pkg
+            has_timer: true
+            has_diagnostics: true
+            auto_shutdown: true
           - package_name: no_params_cpp_pkg
             template: ros2_cpp_pkg
             has_params: false
@@ -53,6 +58,7 @@ jobs:
             has_service_server: true
             has_action_server: true
             has_timer: true
+            has_diagnostics: true
             auto_shutdown: true
           - package_name: default_python_pkg
             template: ros2_python_pkg
@@ -69,6 +75,10 @@ jobs:
             template: ros2_python_pkg
             has_timer: true
             auto_shutdown: true
+          - package_name: diagnostics_python_pkg
+            template: ros2_python_pkg
+            has_diagnostics: true
+            auto_shutdown: true
           - package_name: no_params_python_pkg
             template: ros2_python_pkg
             has_params: false
@@ -83,6 +93,7 @@ jobs:
             has_service_server: true
             has_action_server: true
             has_timer: true
+            has_diagnostics: true
             auto_shutdown: true
           - package_name: interfaces_pkg
             template: ros2_interfaces_pkg
@@ -112,6 +123,7 @@ jobs:
             $( [ "${{ matrix.has_service_server }}" = "true" ] && echo "-d has_service_server=true" ) \
             $( [ "${{ matrix.has_action_server }}" = "true" ] && echo "-d has_action_server=true" ) \
             $( [ "${{ matrix.has_timer }}" = "true" ] && echo "-d has_timer=true" ) \
+            $( [ "${{ matrix.has_diagnostics }}" = "true" ] && echo "-d has_diagnostics=true" ) \
             $( [ "${{ matrix.has_params }}" = "false" ] && echo "-d has_params=false" ) \
             $( [ "${{ matrix.has_launch_file }}" = "false" ] && echo "-d has_launch_file=false" ) \
             . packages
@@ -144,6 +156,8 @@ jobs:
             command: ros2 launch action_cpp_pkg action_cpp_pkg_launch.py
           - package: timer_cpp_pkg
             command: ros2 launch timer_cpp_pkg timer_cpp_pkg_launch.py
+          - package: diagnostics_cpp_pkg
+            command: ros2 launch diagnostics_cpp_pkg diagnostics_cpp_pkg_launch.py
           - package: no_params_cpp_pkg
             command: ros2 launch no_params_cpp_pkg no_params_cpp_pkg_launch.py
           - package: no_launch_file_cpp_pkg
@@ -158,6 +172,8 @@ jobs:
             command: ros2 launch action_python_pkg action_python_pkg_launch.py
           - package: timer_python_pkg
             command: ros2 launch timer_python_pkg timer_python_pkg_launch.py
+          - package: diagnostics_python_pkg
+            command: ros2 launch diagnostics_python_pkg diagnostics_python_pkg_launch.py
           - package: no_params_python_pkg
             command: ros2 launch no_params_python_pkg no_params_python_pkg_launch.py
           - package: no_launch_file_python_pkg
@@ -174,6 +190,12 @@ jobs:
         uses: actions/checkout@v4
       - name: Download artifacts
         uses: actions/download-artifact@v4
+      - name: Install dependencies
+        shell: bash
+        run: |
+          source /opt/ros/$ROS_DISTRO/setup.bash
+          apt update && rosdep update
+          rosdep install -i --from-paths . -y
       - name: Build
         shell: bash
         run: |

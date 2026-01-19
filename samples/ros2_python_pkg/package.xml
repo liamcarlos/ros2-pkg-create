@@ -11,8 +11,8 @@
 
   <license>TODO</license>
 
+  <depend>geometry_msgs</depend>
   <depend>rclpy</depend>
-  <depend>std_msgs</depend>
 
   <export>
     <build_type>ament_python</build_type>

@@ -131,6 +131,12 @@ has_timer:
   type: bool
   default: false
 
+has_diagnostics:
+  help: Add a diagnostics updater to publish diagnostics?
+  when: "{{ template == 'ros2_cpp_pkg' or template == 'ros2_python_pkg' }}"
+  type: bool
+  default: false
+
 auto_shutdown:
   help: Automatically shutdown the node after launch (useful in CI/CD)?
   when: "{{ template == 'ros2_cpp_pkg' or template == 'ros2_python_pkg' }}"

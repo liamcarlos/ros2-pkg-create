@@ -11,8 +11,9 @@
 
   <license>TODO</license>
 
+  <depend>diagnostic_updater</depend>
+  <depend>geometry_msgs</depend>
   <depend>rclpy</depend>
-  <depend>std_msgs</depend>
   <depend>std_srvs</depend>
   <depend>ros2_python_all_pkg_interfaces</depend>
 

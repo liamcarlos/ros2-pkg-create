@@ -1,10 +1,10 @@
 from typing import Any, Optional, Union
 
+from geometry_msgs.msg import PointStamped
 import rclpy
 from rclpy.node import Node
 import rclpy.exceptions
 from rcl_interfaces.msg import (FloatingPointRange, IntegerRange, ParameterDescriptor, SetParametersResult)
-from std_msgs.msg import Int32
 
 
 class Ros2PythonNode(Node):
@@ -126,26 +126,27 @@ class Ros2PythonNode(Node):
         self.add_on_set_parameters_callback(self.parameters_callback)
 
         # subscriber for handling incoming messages
-        self.subscriber = self.create_subscription(Int32,
+        self.subscriber = self.create_subscription(PointStamped,
                                                    "~/input",
                                                    self.topic_callback,
                                                    qos_profile=10)
         self.get_logger().info(f"Subscribed to '{self.subscriber.topic_name}'")
 
         # publisher for publishing outgoing messages
-        self.publisher = self.create_publisher(Int32,
+        self.publisher = self.create_publisher(PointStamped,
                                                "~/output",
                                                qos_profile=10)
         self.get_logger().info(f"Publishing to '{self.publisher.topic_name}'")
 
-    def topic_callback(self, msg: Int32):
+    def topic_callback(self, msg: PointStamped):
         """Processes messages received by a subscriber
 
         Args:
-            msg (Int32): message
+            msg (PointStamped): message
         """
 
-        self.get_logger().info(f"Message received: '{msg.data}'")
+        self.get_logger().info(f"Message received with stamp: '{msg.header.stamp}'")
+        self.publisher.publish(msg)
 
 
 def main():

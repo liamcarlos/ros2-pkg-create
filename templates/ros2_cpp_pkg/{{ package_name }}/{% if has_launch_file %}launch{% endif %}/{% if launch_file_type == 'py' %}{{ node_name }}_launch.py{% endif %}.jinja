@@ -57,13 +57,13 @@ def generate_launch_description():
                     namespace=LaunchConfiguration("namespace"),
                     name=LaunchConfiguration("name"),
 {% if not is_component and executor_type == "MultiThreadedExecutor" %}
-{% if has_params %}
+{% if has_params or has_diagnostics %}
                     parameters=[{"num_threads": LaunchConfiguration("num_threads")}, LaunchConfiguration("params")],
 {% else %}
                     parameters=[{"num_threads": LaunchConfiguration("num_threads")}],
 {% endif %}
 {% else %}
-{% if has_params %}
+{% if has_params or has_diagnostics %}
                     parameters=[LaunchConfiguration("params")],
 {% else %}
                     parameters=[],
@@ -85,13 +85,13 @@ def generate_launch_description():
             namespace=LaunchConfiguration("namespace"),
             name=LaunchConfiguration("name"),
 {% if not is_component and executor_type == "MultiThreadedExecutor" %}
-{% if has_params %}
+{% if has_params or has_diagnostics %}
             parameters=[{"num_threads": LaunchConfiguration("num_threads")}, LaunchConfiguration("params")],
 {% else %}
             parameters=[{"num_threads": LaunchConfiguration("num_threads")}],
 {% endif %}
 {% else %}
-{% if has_params %}
+{% if has_params or has_diagnostics %}
             parameters=[LaunchConfiguration("params")],
 {% else %}
             parameters=[],

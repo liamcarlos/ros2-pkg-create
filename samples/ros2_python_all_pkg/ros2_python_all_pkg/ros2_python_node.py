@@ -1,14 +1,33 @@
 import time
 from typing import Any, Optional, Union
 
+from dataclasses import dataclass
+from diagnostic_msgs.msg import DiagnosticStatus
+from diagnostic_updater import Updater
+from diagnostic_updater import TopicDiagnostic, FrequencyStatusParam, TimeStampStatusParam, DiagnosticStatusWrapper
+from diagnostic_updater import DiagnosedPublisher
+from geometry_msgs.msg import PointStamped
 import rclpy
 from rclpy.action import ActionServer, CancelResponse, GoalResponse
 from rclpy.node import Node
 import rclpy.exceptions
 from rcl_interfaces.msg import (FloatingPointRange, IntegerRange, ParameterDescriptor, SetParametersResult)
-from std_msgs.msg import Int32
 from std_srvs.srv import SetBool
 from ros2_python_all_pkg_interfaces.action import Fibonacci
+
+
+@dataclass
+class TopicDiagnosticConfig:
+    min_frequency: float
+    max_frequency: float
+    min_acceptable_timestamp_delta: float
+    max_acceptable_timestamp_delta: float
+
+@dataclass
+class Health:
+    status: DiagnosticStatus
+    msg: str
+    key_value_pairs: Optional[dict[str, str]] = None
 
 
 class Ros2PythonNode(Node):
@@ -29,6 +48,34 @@ class Ros2PythonNode(Node):
                                                     from_value=0.0,
                                                     to_value=10.0,
                                                     step_value=0.1)
+        self.topic_diagnostic_config = TopicDiagnosticConfig(
+            min_frequency=self.declare_and_load_parameter(name="diagnostic_updater.topic_diagnostic.min_frequency",
+                                                          param_type=rclpy.Parameter.Type.DOUBLE,
+                                                          description="Minimum frequency for incoming messages"),
+            max_frequency=self.declare_and_load_parameter(name="diagnostic_updater.topic_diagnostic.max_frequency",
+                                                          param_type=rclpy.Parameter.Type.DOUBLE,
+                                                          description="Maximum frequency for incoming messages"),
+            min_acceptable_timestamp_delta=self.declare_and_load_parameter(name="diagnostic_updater.topic_diagnostic.min_acceptable_timestamp_delta",
+                                                                          param_type=rclpy.Parameter.Type.DOUBLE,
+                                                                          description="Minimum acceptable timestamp delta for incoming messages"),
+            max_acceptable_timestamp_delta=self.declare_and_load_parameter(name="diagnostic_updater.topic_diagnostic.max_acceptable_timestamp_delta",
+                                                                          param_type=rclpy.Parameter.Type.DOUBLE,
+                                                                          description="Maximum acceptable timestamp delta for incoming messages")
+        )
+        self.diagnosed_publisher_config = TopicDiagnosticConfig(
+            min_frequency=self.declare_and_load_parameter(name="diagnostic_updater.diagnosed_publisher.min_frequency",
+                                                          param_type=rclpy.Parameter.Type.DOUBLE,
+                                                          description="Minimum frequency for outgoing messages"),
+            max_frequency=self.declare_and_load_parameter(name="diagnostic_updater.diagnosed_publisher.max_frequency",
+                                                          param_type=rclpy.Parameter.Type.DOUBLE,
+                                                          description="Maximum frequency for outgoing messages"),
+            min_acceptable_timestamp_delta=self.declare_and_load_parameter(name="diagnostic_updater.diagnosed_publisher.min_acceptable_timestamp_delta",
+                                                                          param_type=rclpy.Parameter.Type.DOUBLE,
+                                                                          description="Minimum acceptable timestamp delta for outgoing messages"),
+            max_acceptable_timestamp_delta=self.declare_and_load_parameter(name="diagnostic_updater.diagnosed_publisher.max_acceptable_timestamp_delta",
+                                                                          param_type=rclpy.Parameter.Type.DOUBLE,
+                                                                          description="Maximum acceptable timestamp delta for outgoing messages")
+        )
 
         self.setup()
 
@@ -130,14 +177,14 @@ class Ros2PythonNode(Node):
         self.add_on_set_parameters_callback(self.parameters_callback)
 
         # subscriber for handling incoming messages
-        self.subscriber = self.create_subscription(Int32,
+        self.subscriber = self.create_subscription(PointStamped,
                                                    "~/input",
                                                    self.topic_callback,
                                                    qos_profile=10)
         self.get_logger().info(f"Subscribed to '{self.subscriber.topic_name}'")
 
         # publisher for publishing outgoing messages
-        self.publisher = self.create_publisher(Int32,
+        self.publisher = self.create_publisher(PointStamped,
                                                "~/output",
                                                qos_profile=10)
         self.get_logger().info(f"Publishing to '{self.publisher.topic_name}'")
@@ -159,14 +206,40 @@ class Ros2PythonNode(Node):
         # timer for repeatedly invoking a callback to publish messages
         self.timer = self.create_timer(1.0, self.timer_callback)
 
-    def topic_callback(self, msg: Int32):
+        # setup diagnostic updater
+        self.diagnostic_updater = Updater(self)
+        self.diagnostic_updater.setHardwareID(self.get_name())
+        self.diagnostic_updater.add("Health", self.health)
+        self.health_ = Health(DiagnosticStatus.STALE, "")
+        # add diagnostic task for monitoring topic subscription with a moving average over min. 5 incoming messages based on expected minimum frequency
+        from math import ceil
+        topic_diagnostic_frequency_window_size = ceil(5 / (self.diagnostic_updater.period * self.topic_diagnostic_config.min_frequency))
+        self.topic_diagnostic = TopicDiagnostic(
+            "~/input",
+            self.diagnostic_updater,
+            FrequencyStatusParam({"min": self.topic_diagnostic_config.min_frequency, "max": self.topic_diagnostic_config.max_frequency}, 0.0, topic_diagnostic_frequency_window_size),
+            TimeStampStatusParam(self.topic_diagnostic_config.min_acceptable_timestamp_delta, self.topic_diagnostic_config.max_acceptable_timestamp_delta)
+        )
+        # add diagnostic task for monitoring topic publisher with a moving average over min. 5 incoming messages based on expected minimum frequency
+        from math import ceil
+        diagnosed_publisher_frequency_window_size = ceil(5 / (self.diagnostic_updater.period * self.diagnosed_publisher_config.min_frequency))
+        self.diagnosed_publisher = DiagnosedPublisher(
+            self.publisher,
+            self.diagnostic_updater,
+            FrequencyStatusParam({"min": self.diagnosed_publisher_config.min_frequency, "max": self.diagnosed_publisher_config.max_frequency}, 0.0, diagnosed_publisher_frequency_window_size),
+            TimeStampStatusParam(self.diagnosed_publisher_config.min_acceptable_timestamp_delta, self.diagnosed_publisher_config.max_acceptable_timestamp_delta)
+        )
+
+    def topic_callback(self, msg: PointStamped):
         """Processes messages received by a subscriber
 
         Args:
-            msg (Int32): message
+            msg (PointStamped): message
         """
 
-        self.get_logger().info(f"Message received: '{msg.data}'")
+        self.topic_diagnostic.tick(rclpy.time.Time.from_msg(msg.header.stamp))
+        self.get_logger().info(f"Message received with stamp: '{msg.header.stamp}'")
+        self.diagnosed_publisher.publish(msg)
 
     def service_callback(self, request: SetBool.Request, response: SetBool.Response) -> SetBool.Response:
         """Processes service requests
@@ -277,6 +350,43 @@ class Ros2PythonNode(Node):
         """
 
         self.get_logger().info("Timer triggered")
+
+        # TODO: Remove this demonstration of health status and implement real health checks using `setHealth()`
+        if self.health_.status == DiagnosticStatus.ERROR:
+            self.setHealth(DiagnosticStatus.ERROR, "Node is non-functional, unable to obtain, and/or yielding implausible data.", {"uptime": f"{self.get_clock().now().nanoseconds / 1e9}"})
+            self.health_.status = DiagnosticStatus.WARN
+        elif self.health_.status == DiagnosticStatus.WARN:
+            self.setHealth(DiagnosticStatus.WARN, "Node is able to assess its own performance level, but is not able to reach its desired performance level.")
+            self.health_.status = DiagnosticStatus.OK
+        elif self.health_.status == DiagnosticStatus.OK:
+            self.setHealth(DiagnosticStatus.OK, "Node is able to assess its own performance level and is reaching its desired performance level.")
+            self.health_.status = DiagnosticStatus.STALE
+        else:
+            self.setHealth(DiagnosticStatus.STALE, "Node performance level cannot be assessed")
+            self.health_.status = DiagnosticStatus.ERROR
+        # end of demonstration
+
+    def health(self, stat: DiagnosticStatusWrapper) -> DiagnosticStatusWrapper:
+        """Function called by diagnostic updater to populate diagnostics status
+        """
+
+        stat.summary(self.health_.status, self.health_.msg)
+        if self.health_.key_value_pairs is not None:
+            for key, value in self.health_.key_value_pairs.items():
+                stat.add(key, value)
+        return stat
+
+    def setHealth(self, status: DiagnosticStatus, msg: str, key_value_pairs: Optional[dict[str, str]] = None):
+        """Sets the health information published by diagnostic updater
+
+        Args:
+            status (DiagnosticStatus): system status
+            msg (str): status message
+            key_value_pairs (dict[str, str], optional): additional key-value pairs
+        """
+
+        self.health_ = Health(status, msg, key_value_pairs)
+        self.diagnostic_updater.force_update()
 
 
 def main():

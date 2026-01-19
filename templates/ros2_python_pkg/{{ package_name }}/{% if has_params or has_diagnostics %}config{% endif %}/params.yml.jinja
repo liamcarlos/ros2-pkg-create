@@ -1,6 +1,9 @@
 /**/*:
   ros__parameters:
+{% if has_params %}
     param: 1.0
+{% endif %}
+{% if has_diagnostics %}
     diagnostic_updater:
       period: 1.0
       use_fqn: false
@@ -14,3 +17,4 @@
         max_frequency: 1.0
         min_acceptable_timestamp_delta: -0.1
         max_acceptable_timestamp_delta: 0.1
+{% endif %}

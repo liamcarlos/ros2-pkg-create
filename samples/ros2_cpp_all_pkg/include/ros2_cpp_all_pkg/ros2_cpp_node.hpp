@@ -4,13 +4,15 @@
 #include <string>
 #include <vector>
 
+#include <diagnostic_updater/diagnostic_updater.hpp>
+#include <diagnostic_updater/publisher.hpp>
+#include <geometry_msgs/msg/point_stamped.hpp>
 #include <lifecycle_msgs/msg/state.hpp>
 #include <lifecycle_msgs/msg/transition.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp_action/rclcpp_action.hpp>
 #include <rclcpp_lifecycle/lifecycle_node.hpp>
 #include <rclcpp_lifecycle/lifecycle_publisher.hpp>
-#include <std_msgs/msg/int32.hpp>
 #include <std_srvs/srv/set_bool.hpp>
 
 #include <ros2_cpp_all_pkg_interfaces/action/fibonacci.hpp>
@@ -21,6 +23,32 @@ namespace ros2_cpp_all_pkg {
 template <typename C> struct is_vector : std::false_type {};
 template <typename T,typename A> struct is_vector< std::vector<T,A> > : std::true_type {};
 template <typename C> inline constexpr bool is_vector_v = is_vector<C>::value;
+
+
+/**
+ * @brief Configuration parameters for topic diagnostics
+ */
+struct TopicDiagnosticConfig {
+  /**
+   * @brief Minimum acceptable frequency
+   */
+  double min_frequency;
+  
+  /**
+   * @brief Maximum acceptable frequency
+   */
+  double max_frequency;
+  
+  /**
+   * @brief Minimum acceptable difference between message timestamp and receipt time (in seconds)
+   */
+  double min_acceptable_timestamp_delta;
+
+  /**
+   * @brief Maximum acceptable difference between message timestamp and receipt time (in seconds)
+   */
+  double max_acceptable_timestamp_delta;
+};
 
 
 /**
@@ -125,7 +153,7 @@ class Ros2CppNode : public rclcpp_lifecycle::LifecycleNode {
    *
    * @param msg message
    */
-  void topicCallback(const std_msgs::msg::Int32::ConstSharedPtr& msg);
+  void topicCallback(const geometry_msgs::msg::PointStamped::ConstSharedPtr& msg);
 
   /**
    * @brief Processes service requests
@@ -171,6 +199,16 @@ class Ros2CppNode : public rclcpp_lifecycle::LifecycleNode {
    */
   void timerCallback();
 
+  /**
+   * @brief Function called by diagnostic updater to populate diagnostics status
+   */
+  void health(diagnostic_updater::DiagnosticStatusWrapper &stat);
+
+  /**
+   * @brief Sets the health information and triggers publishing by diagnostic updater
+   */
+  void setHealth(const unsigned char status, const std::string& msg, const std::map<std::string, std::string>& key_value_pairs = {});
+
  private:
 
   /**
@@ -186,12 +224,12 @@ class Ros2CppNode : public rclcpp_lifecycle::LifecycleNode {
   /**
    * @brief Subscriber
    */
-  rclcpp::Subscription<std_msgs::msg::Int32>::SharedPtr subscriber_;
+  rclcpp::Subscription<geometry_msgs::msg::PointStamped>::SharedPtr subscriber_;
 
   /**
    * @brief Publisher
    */
-  rclcpp_lifecycle::LifecyclePublisher<std_msgs::msg::Int32>::SharedPtr publisher_;
+  rclcpp_lifecycle::LifecyclePublisher<geometry_msgs::msg::PointStamped>::SharedPtr publisher_;
 
   /**
    * @brief Service server
@@ -212,6 +250,40 @@ class Ros2CppNode : public rclcpp_lifecycle::LifecycleNode {
    * @brief Dummy parameter (parameter)
    */
   double param_ = 1.0;
+
+  /**
+   * @brief Diagnostic updater
+   */
+  diagnostic_updater::Updater diagnostic_updater_{this};
+  
+   /**
+   * @brief Diagnostic status indicating node health
+   */
+  struct DiagnosticStatus {
+    unsigned char status = diagnostic_msgs::msg::DiagnosticStatus::STALE;
+    std::string message = "";
+    std::map<std::string, std::string> key_value_pairs = {};
+  } health_;
+
+  /**
+   * @brief Topic diagnostic to auto-diagnose a subscribed topic
+   */
+  std::unique_ptr<diagnostic_updater::TopicDiagnostic> topic_diagnostic_;
+
+  /**
+   * @brief Configuration for auto-diagnosed topic subscription
+   */
+  TopicDiagnosticConfig topic_diagnostic_config_;
+
+  /**
+   * @brief Diagnosed publisher
+   */
+  std::unique_ptr<diagnostic_updater::DiagnosedPublisher<geometry_msgs::msg::PointStamped>> diagnosed_publisher_;
+
+  /**
+   * @brief Configuration for auto-diagnosed publisher
+   */
+  TopicDiagnosticConfig diagnosed_publisher_config_;  
 };
 
 

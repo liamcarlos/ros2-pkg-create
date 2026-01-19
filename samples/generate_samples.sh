@@ -17,6 +17,7 @@ copier copy --trust --defaults --overwrite --vcs-ref=HEAD \
             -d has_service_server=false \
             -d has_action_server=false \
             -d has_timer=false \
+            -d has_diagnostics=false \
             -d has_docker_ros=true \
             $template_dir $script_dir
 
@@ -34,6 +35,7 @@ copier copy --trust --defaults --overwrite --vcs-ref=HEAD \
             -d has_service_server=false \
             -d has_action_server=false \
             -d has_timer=false \
+            -d has_diagnostics=false \
             -d has_docker_ros=true \
             $template_dir $script_dir
 
@@ -51,6 +53,7 @@ copier copy --trust --defaults --overwrite --vcs-ref=HEAD \
             -d has_service_server=false \
             -d has_action_server=false \
             -d has_timer=false \
+            -d has_diagnostics=false \
             -d has_docker_ros=true \
             $template_dir $script_dir
 
@@ -68,6 +71,7 @@ copier copy --trust --defaults --overwrite --vcs-ref=HEAD \
             -d has_service_server=false \
             -d has_action_server=false \
             -d has_timer=false \
+            -d has_diagnostics=false \
             -d has_docker_ros=true \
             $template_dir $script_dir
 
@@ -85,6 +89,7 @@ copier copy --trust --defaults --overwrite --vcs-ref=HEAD \
             -d has_service_server=true \
             -d has_action_server=true \
             -d has_timer=true \
+            -d has_diagnostics=true \
             -d has_docker_ros=true \
             $template_dir $script_dir
 
@@ -99,6 +104,7 @@ copier copy --trust --defaults --overwrite --vcs-ref=HEAD \
             -d has_service_server=false \
             -d has_action_server=false \
             -d has_timer=false \
+            -d has_diagnostics=false \
             -d has_docker_ros=true \
             $template_dir $script_dir
 
@@ -113,6 +119,7 @@ copier copy --trust --defaults --overwrite --vcs-ref=HEAD \
             -d has_service_server=true \
             -d has_action_server=true \
             -d has_timer=true \
+            -d has_diagnostics=true \
             -d has_docker_ros=true \
             $template_dir $script_dir
 

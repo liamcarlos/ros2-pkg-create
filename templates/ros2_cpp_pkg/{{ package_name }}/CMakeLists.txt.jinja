@@ -6,6 +6,12 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 find_package(ament_cmake REQUIRED)
+{% if has_diagnostics %}
+find_package(diagnostic_updater REQUIRED)
+{% endif %}
+{% if has_subscriber or has_publisher %}
+find_package(geometry_msgs REQUIRED)
+{% endif %}
 find_package(rclcpp REQUIRED)
 {% if has_action_server %}
 find_package(rclcpp_action REQUIRED)
@@ -17,7 +23,6 @@ find_package(rclcpp_components REQUIRED)
 {% if is_lifecycle %}
 find_package(rclcpp_lifecycle REQUIRED)
 {% endif %}
-find_package(std_msgs REQUIRED)
 {% if has_service_server %}
 find_package(std_srvs REQUIRED)
 {% endif %}
@@ -48,6 +53,12 @@ target_compile_features(${TARGET_NAME} PUBLIC c_std_99 cxx_std_17)
 
 target_link_libraries(${TARGET_NAME} PUBLIC
   rclcpp::rclcpp
+{% if has_diagnostics %}
+  ${diagnostic_updater_TARGETS}
+{% endif %}
+{% if has_subscriber or has_publisher %}
+  ${geometry_msgs_TARGETS}
+{% endif %}
 {% if has_action_server %}
   ${rclcpp_action_TARGETS}
   {{ '${' ~ package_name ~ '_interfaces_TARGETS}' }}
@@ -58,7 +69,6 @@ target_link_libraries(${TARGET_NAME} PUBLIC
 {% if is_lifecycle %}
   ${rclcpp_lifecycle_TARGETS}
 {% endif %}
-  ${std_msgs_TARGETS}
 {% if has_service_server %}
   ${std_srvs_TARGETS}
 {% endif %}

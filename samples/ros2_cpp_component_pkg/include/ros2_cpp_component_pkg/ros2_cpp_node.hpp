@@ -4,8 +4,8 @@
 #include <string>
 #include <vector>
 
+#include <geometry_msgs/msg/point_stamped.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <std_msgs/msg/int32.hpp>
 
 
 namespace ros2_cpp_component_pkg {
@@ -75,7 +75,7 @@ class Ros2CppNode : public rclcpp::Node {
    *
    * @param msg message
    */
-  void topicCallback(const std_msgs::msg::Int32::ConstSharedPtr& msg);
+  void topicCallback(const geometry_msgs::msg::PointStamped::ConstSharedPtr& msg);
 
  private:
 
@@ -92,12 +92,12 @@ class Ros2CppNode : public rclcpp::Node {
   /**
    * @brief Subscriber
    */
-  rclcpp::Subscription<std_msgs::msg::Int32>::SharedPtr subscriber_;
+  rclcpp::Subscription<geometry_msgs::msg::PointStamped>::SharedPtr subscriber_;
 
   /**
    * @brief Publisher
    */
-  rclcpp::Publisher<std_msgs::msg::Int32>::SharedPtr publisher_;
+  rclcpp::Publisher<geometry_msgs::msg::PointStamped>::SharedPtr publisher_;
 
   /**
    * @brief Dummy parameter (parameter)

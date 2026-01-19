@@ -3,6 +3,20 @@ import time
 {% endif %}
 from typing import Any, Optional, Union
 
+{% if has_diagnostics %}
+from dataclasses import dataclass
+from diagnostic_msgs.msg import DiagnosticStatus
+from diagnostic_updater import Updater
+{% if has_subscriber %}
+from diagnostic_updater import TopicDiagnostic, FrequencyStatusParam, TimeStampStatusParam, DiagnosticStatusWrapper
+{% endif %}
+{% if has_publisher %}
+from diagnostic_updater import DiagnosedPublisher
+{% endif %}
+{% endif %}
+{% if has_subscriber or has_publisher %}
+from geometry_msgs.msg import PointStamped
+{% endif %}
 import rclpy
 {% if has_action_server %}
 from rclpy.action import ActionServer, CancelResponse, GoalResponse
@@ -12,14 +26,27 @@ from rclpy.node import Node
 import rclpy.exceptions
 from rcl_interfaces.msg import (FloatingPointRange, IntegerRange, ParameterDescriptor, SetParametersResult)
 {% endif %}
-{% if has_subscriber or has_publisher %}
-from std_msgs.msg import Int32
-{% endif %}
 {% if has_service_server %}
 from std_srvs.srv import SetBool
 {% endif %}
 {% if has_action_server %}
 from {{ package_name }}_interfaces.action import Fibonacci
+{% endif %}
+{% if has_diagnostics %}
+
+
+@dataclass
+class TopicDiagnosticConfig:
+    min_frequency: float
+    max_frequency: float
+    min_acceptable_timestamp_delta: float
+    max_acceptable_timestamp_delta: float
+
+@dataclass
+class Health:
+    status: DiagnosticStatus
+    msg: str
+    key_value_pairs: Optional[dict[str, str]] = None
 {% endif %}
 
 
@@ -36,9 +63,10 @@ class {{ node_class_name }}(Node):
 
         self.publisher = None
 {% endif %}
-{% if has_params %}
+{% if has_params or has_diagnostics %}
 
         self.auto_reconfigurable_params: list[str] = []
+{% if has_params %}
         self.param = self.declare_and_load_parameter(name="param",
                                                     param_type=rclpy.Parameter.Type.DOUBLE,
                                                     description="TODO",
@@ -47,9 +75,44 @@ class {{ node_class_name }}(Node):
                                                     to_value=10.0,
                                                     step_value=0.1)
 {% endif %}
+{% if has_diagnostics %}
+{% if has_subscriber %}
+        self.topic_diagnostic_config = TopicDiagnosticConfig(
+            min_frequency=self.declare_and_load_parameter(name="diagnostic_updater.topic_diagnostic.min_frequency",
+                                                          param_type=rclpy.Parameter.Type.DOUBLE,
+                                                          description="Minimum frequency for incoming messages"),
+            max_frequency=self.declare_and_load_parameter(name="diagnostic_updater.topic_diagnostic.max_frequency",
+                                                          param_type=rclpy.Parameter.Type.DOUBLE,
+                                                          description="Maximum frequency for incoming messages"),
+            min_acceptable_timestamp_delta=self.declare_and_load_parameter(name="diagnostic_updater.topic_diagnostic.min_acceptable_timestamp_delta",
+                                                                          param_type=rclpy.Parameter.Type.DOUBLE,
+                                                                          description="Minimum acceptable timestamp delta for incoming messages"),
+            max_acceptable_timestamp_delta=self.declare_and_load_parameter(name="diagnostic_updater.topic_diagnostic.max_acceptable_timestamp_delta",
+                                                                          param_type=rclpy.Parameter.Type.DOUBLE,
+                                                                          description="Maximum acceptable timestamp delta for incoming messages")
+        )
+{% endif %}
+{% if has_publisher %}
+        self.diagnosed_publisher_config = TopicDiagnosticConfig(
+            min_frequency=self.declare_and_load_parameter(name="diagnostic_updater.diagnosed_publisher.min_frequency",
+                                                          param_type=rclpy.Parameter.Type.DOUBLE,
+                                                          description="Minimum frequency for outgoing messages"),
+            max_frequency=self.declare_and_load_parameter(name="diagnostic_updater.diagnosed_publisher.max_frequency",
+                                                          param_type=rclpy.Parameter.Type.DOUBLE,
+                                                          description="Maximum frequency for outgoing messages"),
+            min_acceptable_timestamp_delta=self.declare_and_load_parameter(name="diagnostic_updater.diagnosed_publisher.min_acceptable_timestamp_delta",
+                                                                          param_type=rclpy.Parameter.Type.DOUBLE,
+                                                                          description="Minimum acceptable timestamp delta for outgoing messages"),
+            max_acceptable_timestamp_delta=self.declare_and_load_parameter(name="diagnostic_updater.diagnosed_publisher.max_acceptable_timestamp_delta",
+                                                                          param_type=rclpy.Parameter.Type.DOUBLE,
+                                                                          description="Maximum acceptable timestamp delta for outgoing messages")
+        )
+{% endif %}
+{% endif %}
+{% endif %}
 
         self.setup()
-{% if has_params %}
+{% if has_params or has_diagnostics %}
 
     def declare_and_load_parameter(self,
         name: str,
@@ -145,7 +208,7 @@ class {{ node_class_name }}(Node):
 
     def setup(self):
         """Sets up subscribers, publishers, etc. to configure the node"""
-{% if has_params %}
+{% if has_params or has_diagnostics %}
 
         # callback for dynamic parameter configuration
         self.add_on_set_parameters_callback(self.parameters_callback)
@@ -153,7 +216,7 @@ class {{ node_class_name }}(Node):
 {% if has_subscriber %}
 
         # subscriber for handling incoming messages
-        self.subscriber = self.create_subscription(Int32,
+        self.subscriber = self.create_subscription(PointStamped,
                                                    "~/input",
                                                    self.topic_callback,
                                                    qos_profile=10)
@@ -162,7 +225,7 @@ class {{ node_class_name }}(Node):
 {% if has_publisher %}
 
         # publisher for publishing outgoing messages
-        self.publisher = self.create_publisher(Int32,
+        self.publisher = self.create_publisher(PointStamped,
                                                "~/output",
                                                qos_profile=10)
         self.get_logger().info(f"Publishing to '{self.publisher.topic_name}'")
@@ -190,20 +253,60 @@ class {{ node_class_name }}(Node):
         # timer for repeatedly invoking a callback to publish messages
         self.timer = self.create_timer(1.0, self.timer_callback)
 {% endif %}
+{% if has_diagnostics %}
+
+        # setup diagnostic updater
+        self.diagnostic_updater = Updater(self)
+        self.diagnostic_updater.setHardwareID(self.get_name())
+        self.diagnostic_updater.add("Health", self.health)
+        self.health_ = Health(DiagnosticStatus.STALE, "")
+{% if has_subscriber %}
+        # add diagnostic task for monitoring topic subscription with a moving average over min. 5 incoming messages based on expected minimum frequency
+        from math import ceil
+        topic_diagnostic_frequency_window_size = ceil(5 / (self.diagnostic_updater.period * self.topic_diagnostic_config.min_frequency))
+        self.topic_diagnostic = TopicDiagnostic(
+            "~/input",
+            self.diagnostic_updater,
+            FrequencyStatusParam({"min": self.topic_diagnostic_config.min_frequency, "max": self.topic_diagnostic_config.max_frequency}, 0.0, topic_diagnostic_frequency_window_size),
+            TimeStampStatusParam(self.topic_diagnostic_config.min_acceptable_timestamp_delta, self.topic_diagnostic_config.max_acceptable_timestamp_delta)
+        )
+{% endif %}
+{% if has_publisher %}
+        # add diagnostic task for monitoring topic publisher with a moving average over min. 5 incoming messages based on expected minimum frequency
+        from math import ceil
+        diagnosed_publisher_frequency_window_size = ceil(5 / (self.diagnostic_updater.period * self.diagnosed_publisher_config.min_frequency))
+        self.diagnosed_publisher = DiagnosedPublisher(
+            self.publisher,
+            self.diagnostic_updater,
+            FrequencyStatusParam({"min": self.diagnosed_publisher_config.min_frequency, "max": self.diagnosed_publisher_config.max_frequency}, 0.0, diagnosed_publisher_frequency_window_size),
+            TimeStampStatusParam(self.diagnosed_publisher_config.min_acceptable_timestamp_delta, self.diagnosed_publisher_config.max_acceptable_timestamp_delta)
+        )
+{% endif %}
+{% endif %}
 {% if auto_shutdown %}
 
         self.auto_shutdown_timer = self.create_timer(3.0, self.auto_shutdown_timer_callback)
 {% endif %}
 {% if has_subscriber %}
 
-    def topic_callback(self, msg: Int32):
+    def topic_callback(self, msg: PointStamped):
         """Processes messages received by a subscriber
 
         Args:
-            msg (Int32): message
+            msg (PointStamped): message
         """
 
-        self.get_logger().info(f"Message received: '{msg.data}'")
+{% if has_diagnostics %}
+        self.topic_diagnostic.tick(rclpy.time.Time.from_msg(msg.header.stamp))
+{% endif %}
+        self.get_logger().info(f"Message received with stamp: '{msg.header.stamp}'")
+{% endif %}
+{% if has_publisher %}
+{% if has_diagnostics %}
+        self.diagnosed_publisher.publish(msg)
+{% else %}
+        self.publisher.publish(msg)
+{% endif %}
 {% endif %}
 {% if has_service_server %}
 
@@ -320,6 +423,47 @@ class {{ node_class_name }}(Node):
         """
 
         self.get_logger().info("Timer triggered")
+{% if has_diagnostics %}
+
+        # TODO: Remove this demonstration of health status and implement real health checks using `setHealth()`
+        if self.health_.status == DiagnosticStatus.ERROR:
+            self.setHealth(DiagnosticStatus.ERROR, "Node is non-functional, unable to obtain, and/or yielding implausible data.", {"uptime": f"{self.get_clock().now().nanoseconds / 1e9}"})
+            self.health_.status = DiagnosticStatus.WARN
+        elif self.health_.status == DiagnosticStatus.WARN:
+            self.setHealth(DiagnosticStatus.WARN, "Node is able to assess its own performance level, but is not able to reach its desired performance level.")
+            self.health_.status = DiagnosticStatus.OK
+        elif self.health_.status == DiagnosticStatus.OK:
+            self.setHealth(DiagnosticStatus.OK, "Node is able to assess its own performance level and is reaching its desired performance level.")
+            self.health_.status = DiagnosticStatus.STALE
+        else:
+            self.setHealth(DiagnosticStatus.STALE, "Node performance level cannot be assessed")
+            self.health_.status = DiagnosticStatus.ERROR
+        # end of demonstration
+{% endif %}
+{% endif %}
+{% if has_diagnostics %}
+
+    def health(self, stat: DiagnosticStatusWrapper) -> DiagnosticStatusWrapper:
+        """Function called by diagnostic updater to populate diagnostics status
+        """
+
+        stat.summary(self.health_.status, self.health_.msg)
+        if self.health_.key_value_pairs is not None:
+            for key, value in self.health_.key_value_pairs.items():
+                stat.add(key, value)
+        return stat
+
+    def setHealth(self, status: DiagnosticStatus, msg: str, key_value_pairs: Optional[dict[str, str]] = None):
+        """Sets the health information published by diagnostic updater
+
+        Args:
+            status (DiagnosticStatus): system status
+            msg (str): status message
+            key_value_pairs (dict[str, str], optional): additional key-value pairs
+        """
+
+        self.health_ = Health(status, msg, key_value_pairs)
+        self.diagnostic_updater.force_update()
 {% endif %}
 {% if auto_shutdown %}
 

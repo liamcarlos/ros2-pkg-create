@@ -120,24 +120,24 @@ void Ros2CppNode::setup() {
   parameters_callback_ = this->add_on_set_parameters_callback(std::bind(&Ros2CppNode::parametersCallback, this, std::placeholders::_1));
 
   // subscriber for handling incoming messages
-  subscriber_ = this->create_subscription<std_msgs::msg::Int32>("~/input", 10, std::bind(&Ros2CppNode::topicCallback, this, std::placeholders::_1));
+  subscriber_ = this->create_subscription<geometry_msgs::msg::PointStamped>("~/input", 10, std::bind(&Ros2CppNode::topicCallback, this, std::placeholders::_1));
   RCLCPP_INFO(this->get_logger(), "Subscribed to '%s'", subscriber_->get_topic_name());
 
   // publisher for publishing outgoing messages
-  publisher_ = this->create_publisher<std_msgs::msg::Int32>("~/output", 10);
+  publisher_ = this->create_publisher<geometry_msgs::msg::PointStamped>("~/output", 10);
   RCLCPP_INFO(this->get_logger(), "Publishing to '%s'", publisher_->get_topic_name());
 }
 
 
-void Ros2CppNode::topicCallback(const std_msgs::msg::Int32::ConstSharedPtr& msg) {
+void Ros2CppNode::topicCallback(const geometry_msgs::msg::PointStamped::ConstSharedPtr& msg) {
 
-  RCLCPP_INFO(this->get_logger(), "Message received: '%d'", msg->data);
+  RCLCPP_INFO(this->get_logger(), "Message received with stamp: '%d'", msg->header.stamp.sec);
 
   // publish message
-  std_msgs::msg::Int32 out_msg;
-  out_msg.data = msg->data;
+  geometry_msgs::msg::PointStamped out_msg;
+  out_msg = *msg;
   publisher_->publish(out_msg);
-  RCLCPP_INFO(this->get_logger(), "Message published: '%d'", out_msg.data);
+  RCLCPP_INFO(this->get_logger(), "Message published with stamp: '%d'", out_msg.header.stamp.sec);
 }
 
 

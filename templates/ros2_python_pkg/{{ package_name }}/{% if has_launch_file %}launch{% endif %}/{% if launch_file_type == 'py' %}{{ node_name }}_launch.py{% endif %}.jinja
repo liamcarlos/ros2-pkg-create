@@ -35,7 +35,7 @@ def generate_launch_description():
             executable="{{ node_name }}",
             namespace=LaunchConfiguration("namespace"),
             name=LaunchConfiguration("name"),
-{% if has_params %}
+{% if has_params or has_diagnostics %}
             parameters=[LaunchConfiguration("params")],
 {% else %}
             parameters=[],
